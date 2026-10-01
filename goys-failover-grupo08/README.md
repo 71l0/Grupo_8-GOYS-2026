@@ -1,6 +1,6 @@
 # GOYS — Failover Routing: la red que no se cae
 
-**Materia:** Gestión Operativa y Seguridad en Redes (GOYS) — UTN FR La Plata
+**Materia:** Gestión Operativa y Seguridad en Redes (GOYS) — UTN FR La Plata	
 **Grupo:** `08`
 **Simulador:** GNS3 · MikroTik CHR (RouterOS 7)
 **Vencimiento final:** viernes 23 de octubre de 2026
@@ -9,15 +9,12 @@
 
 ## Integrantes y roles
 
-| Rol | Integrante | Usuario git | Responsabilidad principal |
-|-----|------------|-------------|---------------------------|
-| R1 — Líder / Edge-WAN | `<nombre>` | `<usuario>` | EDGE: eBGP ×2, redistribución, BGP MD5, firewall |
-| R2 — Proveedores | `<nombre>` | `<usuario>` | ISP-1 / ISP-2: default-originate, eBGP, hardening |
-| R3 — Core | `<nombre>` | `<usuario>` | CORE-1 / CORE-2: OSPF, enlace core–core, OSPF MD5 |
-| R4 — Distribución | `<nombre>` | `<usuario>` | DIST-1 / DIST-2: VRRP (auth), OSPF, gateways |
-| R5 — Hosts / QA / Ops | `<nombre>` | `<usuario>` | Hosts, drills, backlog, change log, backups, runbooks |
-
-> Cada rol opera y asegura su parte. **Rotación obligatoria en la Fase 4 (R1 ↔ R2).**
+| Rol | Integrante | Legajo |
+|-----|------------|-------------|
+| R1 | Ulises Mateo Bucchino | 33326 
+| R2 |  Valentín Garzaniti |  32547
+| R3 | Jano Stratakis |  30765
+| R4 | Sofia Raggi | 31532
 
 ---
 
