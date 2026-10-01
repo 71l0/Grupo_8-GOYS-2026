@@ -1,9 +1,9 @@
 # GOYS — Failover Routing: la red que no se cae
 
-**Materia:** Gestión Operativa y Seguridad en Redes (GOYS) — UTN FR La Plata	
-**Grupo:** `08`
-**Simulador:** GNS3 · MikroTik CHR (RouterOS 7)
-**Vencimiento final:** viernes 23 de octubre de 2026
+- **Materia:** Gestión Operativa y Seguridad en Redes (GOYS) — UTN FR La Plata	
+- **Grupo:** `08`
+- **Simulador:** GNS3 · MikroTik CHR (RouterOS 7)
+- **Vencimiento final:** viernes 23 de octubre de 2026
 
 ---
 
