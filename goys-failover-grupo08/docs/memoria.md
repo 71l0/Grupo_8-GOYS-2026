@@ -1,6 +1,8 @@
 # F0 — Diseño y gestión de cambio
 
-## 0. Criterios definidos
+## 1.1 IPAM / direccionamiento
+
+### 1.1.1 Criterios definidos
 
 - 7 routers MikroTik CHR.
 - 2 switches.
@@ -18,7 +20,7 @@
 - PC-USER: `192.168.10.100/24`, gateway `192.168.10.1`.
 - PC-SERVER: `192.168.20.100/24`, gateway `192.168.20.1`.
 
-## 1. Criterio de direccionamiento
+### 1.1.2 Criterio de direccionamiento
 
 | Elemento | Criterio |
 |---|---|
@@ -31,9 +33,9 @@
 | VRRP SERVERS | VRID `20` |
 | Solapamiento de subredes | No permitido |
 
-## 2. Tabla de direccionamiento de ENLACES
+### 1.1.3 Tabla de direccionamiento de ENLACES
 
-### Enlaces de Capa 3 con subred `/30`.
+#### Enlaces de Capa 3 con subred `/30`.
 
 | # | Enlace | Subred | Extremo A (IP) | Extremo B (IP) |
 |---:|---|---|---|---|
@@ -47,7 +49,7 @@
 | 8 | CORE-2 ↔ DIST-1 | `10.255.0.28/30` | CORE-2 (`10.255.0.29`) | DIST-1 (`10.255.0.30`) |
 | 9 | CORE-2 ↔ DIST-2 | `10.255.0.32/30` | CORE-2 (`10.255.0.33`) | DIST-2 (`10.255.0.34`) |
 
-### Enlaces de Capa 2
+#### Enlaces de Capa 2
 
 Los enlaces entre los routers de distribución y los switches de acceso son trunks de Capa 2. Por lo tanto, no se asigna una dirección IP directamente al enlace físico.
 
@@ -60,14 +62,14 @@ Los enlaces entre los routers de distribución y los switches de acceso son trun
 | 14 | SW-ACC-USERS ↔ PC-USER | Access L2 | USERS | `192.168.10.100/24` | Access |
 | 15 | SW-ACC-SERVERS ↔ PC-SERVER | Access L2 | SERVERS | `192.168.20.100/24`| Access | 
 
-### VLAN y segmentos LAN
+#### VLAN y segmentos LAN
 
 | VLAN | Nombre | Subred | Gateway virtual VRRP | Host |
 |---:|---|---|---|---|
 | 10 | USERS | `192.168.10.0/24` | `192.168.10.1` | PC-USER |
 | 20 | SERVERS | `192.168.20.0/24` | `192.168.20.1` | PC-SERVER |
 
-## 3. LAN USERS
+### 1.1.4 LAN USERS
 
 **VLAN:** ` 10 - USERS `
 **Red:** `192.168.10.0/24`
@@ -82,7 +84,7 @@ Los enlaces entre los routers de distribución y los switches de acceso son trun
 | Máscara | `255.255.255.0` |
 | Gateway PC-USER | `192.168.10.1` |
 
-### VRRP — USERS
+#### VRRP — USERS
 
 | Parámetro | Valor |
 |---|---|
@@ -95,7 +97,7 @@ Los enlaces entre los routers de distribución y los switches de acceso son trun
 
 Clave autenticacion: definida como secreto compartido entre DIST-1 y DIST-2.
 
-## 4. LAN SERVERS
+### 1.1.5 LAN SERVERS
 
 **Red:** `192.168.20.0/24`
 
@@ -108,7 +110,7 @@ Clave autenticacion: definida como secreto compartido entre DIST-1 y DIST-2.
 | Máscara | `255.255.255.0` |
 | Gateway PC-SERVER | `192.168.20.1` |
 
-### VRRP — SERVERS
+#### VRRP — SERVERS
 
 | Parámetro | Valor |
 |---|---|
@@ -121,7 +123,7 @@ Clave autenticacion: definida como secreto compartido entre DIST-1 y DIST-2.
 
 Clave autenticacion: definida como secreto compartido entre DIST-1 y DIST-2.
 
-## 5. Loopbacks y Router-ID
+### 1.1.6 Loopbacks y Router-ID
 
 | Nodo | Rol | Loopback | Router-ID |
 |---|---|---|---|
@@ -135,7 +137,7 @@ Clave autenticacion: definida como secreto compartido entre DIST-1 y DIST-2.
 
 > Los Router-ID de CORE-1 y CORE-2 están definidos por el diagrama.
 
-## 6. Resumen de redes
+### 1.1.7 Resumen de redes
 | Uso             | Red/VLAN          | Máscara           | Tipo       |
 | --------------- | ----------------- | ----------------- | ---------- |
 | ISP-1 ↔ EDGE    | `10.255.0.0/30`   | `255.255.255.252` | L3 P2P     |
@@ -151,9 +153,7 @@ Clave autenticacion: definida como secreto compartido entre DIST-1 y DIST-2.
 | VLAN 20 SERVERS | `192.168.20.0/24` | `255.255.255.0`   | LAN / VRRP |
 | Loopbacks       | 7 × `/32`         | `255.255.255.255` | Router-ID  |
 
-
-
-## 7. Verificación de solapamiento
+### 1.1.8 Verificación de solapamiento
 
 El direccionamiento utiliza bloques separados:
 
@@ -164,22 +164,17 @@ El direccionamiento utiliza bloques separados:
 | `192.168.20.0/24` | VLAN 20 SERVERS |
 | `1.1.1.1/32` – `7.7.7.7/32` | Router-ID / Loopbacks |
 
-
 No se deben utilizar subredes repetidas entre enlaces, LANs o loopbacks.
 
 Los enlaces L2 no poseen una subred IP propia. Las direcciones IP pertenecen a las VLAN/LAN transportadas por dichos enlaces.
 
----
-
-### 1.3 Política de seguridad
+## 1.2 Política de seguridad
 
 Alcance: los **7 routers CHR** (ISP-1, ISP-2, EDGE, CORE-1, CORE-2, DIST-1, DIST-2), RouterOS 7.
 
 Principio rector: **mínimo privilegio y mínima superficie de ataque**. Cada usuario tiene solo los permisos que necesita, cada servicio que no se usa se apaga, y todo protocolo de control (OSPF, BGP, VRRP) se autentica para que ningún equipo no autorizado pueda inyectar rutas o tomar el gateway.
 
----
-
-#### 1.3.1 Usuarios y privilegios
+### 1.2.1 Usuarios y privilegios
 
 | Usuario | Grupo | Permisos | Uso |
 |---------|-------|----------|-----|
@@ -198,11 +193,9 @@ Reglas:
 /user add name=monitor group=monitor password=<MONITOR_PASS>
 ```
 
----
+### 1.2.2 Servicios a deshabilitar
 
-#### 1.3.2 Servicios a deshabilitar
-
-##### 1.3.2.1 Servicios de gestión (`/ip service`)
+#### 1.3.2.1 Servicios de gestión (`/ip service`)
 
 | Servicio | Puerto | Decisión | Motivo |
 |----------|:------:|:--------:|--------|
@@ -222,7 +215,7 @@ SSH y Winbox se restringen a redes internas en F3, con el firewall del EDGE.
 /ip ssh set strong-crypto=yes
 ```
 
-##### 1.3.2.2 Otros servicios y descubrimiento
+#### 1.2.2.2 Otros servicios y descubrimiento
 
 | Servicio | Decisión | Motivo |
 |----------|:--------:|--------|
@@ -248,11 +241,9 @@ SSH y Winbox se restringen a redes internas en F3, con el firewall del EDGE.
 
 > ⚠️ Si alguien gestiona por **Winbox vía MAC** dentro de GNS3, apagar MAC-Winbox lo deja afuera. Conectarse por IP (Winbox o SSH) o por la consola de GNS3, que no se ve afectada.
 
----
+### 1.2.3 Claves de autenticación del plano de control
 
-#### 1.3.3 Claves de autenticación del plano de control
-
-##### 1.3.3.1 Resumen
+#### 1.2.3.1 Resumen
 
 | Protocolo | Mecanismo | Dónde | Alcance de la clave | Responsable |
 |-----------|-----------|-------|---------------------|-------------|
@@ -266,7 +257,7 @@ Criterio:
 - **BGP**: cada sesión es una relación con otra organización (cada ISP). Si la clave de un proveedor se filtra, la sesión con el otro sigue protegida.
 - **VRRP**: una clave por grupo, para que un error de configuración en un grupo no afecte al otro.
 
-##### 1.3.3.2 Convención de claves
+#### 1.2.3.2 Convención de claves
 
 | Clave | Identificador | Requisito |
 |-------|---------------|-----------|
@@ -278,7 +269,7 @@ Criterio:
 
 **Las claves reales no se commitean al repo.** En los `.rsc` y en la memoria se usan los placeholders de la tabla. Las claves reales se comparten por un canal privado del grupo y se le pasan al docente si las pide.
 
-##### 1.3.3.3 Configuración de referencia
+#### 1.2.3.3 Configuración de referencia
 
 **OSPF MD5:** se aplica en el interface-template de cada router OSPF.
 
@@ -303,18 +294,14 @@ Criterio:
 
 > ⚠️ **VRRPv3 (RFC 5798), que es el default de RouterOS 7, no soporta autenticación.** El RFC la eliminó porque una clave simple viaja en texto plano y no aporta seguridad real. Para cumplir la consigna se usa **VRRPv2 (RFC 3768) con auth simple**. Conviene saberlo para la defensa: la auth simple de VRRP evita errores de configuración (un router mal configurado que se suma al grupo), pero no frena a un atacante que capture el tráfico.
 
----
-
-#### 1.3.4 Relación con backups
+### 1.2.4 Relación con backups
 
 - `/export` en RouterOS 7 **oculta los datos sensibles por defecto**: passwords y claves no aparecen. Por eso los `/export` del directorio `backups/` se pueden versionar sin filtrar claves.
 - Al restaurar desde un `/export` hay que **volver a cargar las claves** a mano.
 - Los archivos binarios de `/system backup save` sí contienen las claves. Se generan **siempre con password** (`/system backup save password=<BACKUP_PASS>`) y solo entonces se versionan en `backups/`, según la política de operación (sección 1.4 de la memoria). Un `.backup` sin password no se commitea.
 - `<BACKUP_PASS>` sigue la misma regla que las demás claves: no se commitea y se comparte por el canal privado del grupo.
 
----
-
-#### 1.3.5 Verificación (F1 y F4)
+### 1.2.5 Verificación (F1 y F4)
 
 | Control | Cómo se verifica | Resultado esperado |
 |---------|------------------|--------------------|
@@ -329,7 +316,7 @@ Las tres últimas son la **prueba obligatoria de clave incorrecta** del Epic F4 
 
 ---
 
-### 1.4 Política de operación
+## 1.3 Política de operación
 
 - **Formato del change log** (convención de commits): 
   se utilizará la convención "Conventional Commits" para el repositorio con la estructura: `tipo(alcance): descripción breve`. Los tipos permitidos estrictamente son: `feat` (nueva config/feature), `fix` (correcciones), `docs` (memoria/runbooks), `ops` (backups/change log), y `chore` (mantenimiento estructural). 
