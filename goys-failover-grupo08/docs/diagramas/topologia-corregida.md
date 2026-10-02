@@ -27,9 +27,9 @@ Así queda la red después de aplicar las correcciones. Las direcciones IP no va
                          |       ___________________       |
                          |      /                   \      |
                          |     /                     \     |
-[ ACCESS ]           SW-USERS                       SW-SERVERS
+[ ACCESS ]         SW-ACC-USERS                   SW-ACC-SERVERS
                          |                               |
-                      PC-USER                           SRV
+                      PC-USER                        PC-SERVER
 ```
 
 Las líneas cruzadas son:
@@ -46,15 +46,15 @@ Las líneas cruzadas son:
 | 4 | EDGE ↔ CORE-2 | Edge / Core |
 | 5 | CORE-1 ↔ CORE-2 | Core (el que faltaba) |
 | 6 | CORE-1 ↔ DIST-1 | Core / Distribución |
-| 7 | CORE-2 ↔ DIST-1 | Core / Distribución |
-| 8 | CORE-1 ↔ DIST-2 | Core / Distribución |
+| 7 | CORE-1 ↔ DIST-2 | Core / Distribución |
+| 8 | CORE-2 ↔ DIST-1 | Core / Distribución |
 | 9 | CORE-2 ↔ DIST-2 | Core / Distribución |
-| 10 | DIST-1 ↔ SW-USERS | Distribución / Acceso |
-| 11 | DIST-2 ↔ SW-USERS | Distribución / Acceso |
-| 12 | DIST-1 ↔ SW-SERVERS | Distribución / Acceso |
-| 13 | DIST-2 ↔ SW-SERVERS | Distribución / Acceso |
-| 14 | SW-USERS ↔ PC-USER | Acceso |
-| 15 | SW-SERVERS ↔ SRV | Acceso |
+| 10 | DIST-1 ↔ SW-ACC-USERS | Distribución / Acceso |
+| 11 | DIST-2 ↔ SW-ACC-USERS | Distribución / Acceso |
+| 12 | DIST-1 ↔ SW-ACC-SERVERS | Distribución / Acceso |
+| 13 | DIST-2 ↔ SW-ACC-SERVERS | Distribución / Acceso |
+| 14 | SW-ACC-USERS ↔ PC-USER | Acceso |
+| 15 | SW-ACC-SERVERS ↔ PC-SERVER | Acceso |
 
 En total son 11 nodos (7 routers, 2 switches y 2 hosts) y 15 enlaces, lo mismo que dice la consigna. En F1 lo comparamos con el proyecto de GNS3.
 
