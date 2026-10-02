@@ -1,6 +1,6 @@
 # Topología corregida
 
-Así queda la red después de aplicar las correcciones. Las direcciones IP no van acá, están en el IPAM.
+Así queda la red después de aplicar las correcciones. Las direcciones IP no van acá, están en el IPAM ([`memoria.md`](../memoria.md)).
 
 ```
 [ INTERNET ]        ISP-1 (AS 65001)               ISP-2 (AS 65002)
@@ -63,7 +63,7 @@ En total son 11 nodos (7 routers, 2 switches y 2 hosts) y 15 enlaces, lo mismo q
 | Original | Corregido |
 |----------|-----------|
 | Un solo ASA como firewall | Filtrado en EDGE; en producción, dos firewalls en failover |
-| Redes repetidas entre sitios | Cada red es única (ver IPAM) |
+| Redes repetidas entre sitios | Cada red es única (ver IPAM en [`memoria.md`](../memoria.md)) |
 | C1 y C2 sin enlace entre sí | Enlace CORE-1 ↔ CORE-2 |
 | HSRP en el core | VRRP en DIST-1 / DIST-2, el core solo rutea |
 | iBGP con route reflector a través del ASA | eBGP solo en EDGE, sin RR, OSPF adentro |
