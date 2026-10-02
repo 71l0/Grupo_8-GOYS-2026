@@ -1,6 +1,6 @@
 # Topología corregida
 
-Así queda la red después de aplicar las correcciones. Las direcciones IP no van acá, están en el IPAM.
+Así queda la red después de aplicar las correcciones. Las direcciones IP no van acá, están en el IPAM ([`memoria.md`](../memoria.md)).
 
 ```
 [ INTERNET ]        ISP-1 (AS 65001)               ISP-2 (AS 65002)
@@ -27,9 +27,9 @@ Así queda la red después de aplicar las correcciones. Las direcciones IP no va
                          |       ___________________       |
                          |      /                   \      |
                          |     /                     \     |
-[ ACCESS ]           SW-USERS                       SW-SERVERS
+[ ACCESS ]         SW-ACC-USERS                   SW-ACC-SERVERS
                          |                               |
-                      PC-USER                           SRV
+                      PC-USER                        PC-SERVER
 ```
 
 Las líneas cruzadas son:
@@ -46,15 +46,15 @@ Las líneas cruzadas son:
 | 4 | EDGE ↔ CORE-2 | Edge / Core |
 | 5 | CORE-1 ↔ CORE-2 | Core (el que faltaba) |
 | 6 | CORE-1 ↔ DIST-1 | Core / Distribución |
-| 7 | CORE-2 ↔ DIST-1 | Core / Distribución |
-| 8 | CORE-1 ↔ DIST-2 | Core / Distribución |
+| 7 | CORE-1 ↔ DIST-2 | Core / Distribución |
+| 8 | CORE-2 ↔ DIST-1 | Core / Distribución |
 | 9 | CORE-2 ↔ DIST-2 | Core / Distribución |
-| 10 | DIST-1 ↔ SW-USERS | Distribución / Acceso |
-| 11 | DIST-2 ↔ SW-USERS | Distribución / Acceso |
-| 12 | DIST-1 ↔ SW-SERVERS | Distribución / Acceso |
-| 13 | DIST-2 ↔ SW-SERVERS | Distribución / Acceso |
-| 14 | SW-USERS ↔ PC-USER | Acceso |
-| 15 | SW-SERVERS ↔ SRV | Acceso |
+| 10 | DIST-1 ↔ SW-ACC-USERS | Distribución / Acceso |
+| 11 | DIST-2 ↔ SW-ACC-USERS | Distribución / Acceso |
+| 12 | DIST-1 ↔ SW-ACC-SERVERS | Distribución / Acceso |
+| 13 | DIST-2 ↔ SW-ACC-SERVERS | Distribución / Acceso |
+| 14 | SW-ACC-USERS ↔ PC-USER | Acceso |
+| 15 | SW-ACC-SERVERS ↔ PC-SERVER | Acceso |
 
 En total son 11 nodos (7 routers, 2 switches y 2 hosts) y 15 enlaces, lo mismo que dice la consigna. En F1 lo comparamos con el proyecto de GNS3.
 
@@ -63,7 +63,7 @@ En total son 11 nodos (7 routers, 2 switches y 2 hosts) y 15 enlaces, lo mismo q
 | Original | Corregido |
 |----------|-----------|
 | Un solo ASA como firewall | Filtrado en EDGE; en producción, dos firewalls en failover |
-| Redes repetidas entre sitios | Cada red es única (ver IPAM) |
+| Redes repetidas entre sitios | Cada red es única (ver IPAM en [`memoria.md`](../memoria.md)) |
 | C1 y C2 sin enlace entre sí | Enlace CORE-1 ↔ CORE-2 |
 | HSRP en el core | VRRP en DIST-1 / DIST-2, el core solo rutea |
 | iBGP con route reflector a través del ASA | eBGP solo en EDGE, sin RR, OSPF adentro |

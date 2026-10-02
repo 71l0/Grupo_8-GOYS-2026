@@ -35,10 +35,10 @@ Formato de tarea: `- [ ] descripción (Rol)`
 
 ### Feature: Política de seguridad
 *Criterio: usuarios/privilegios, servicios a deshabilitar y claves de auth definidos.*
-- [x] Definir usuarios y privilegios (admin, `monitor` read-only) (R2)
-- [x] Listar servicios a deshabilitar en los 7 routers (R1)
-- [x] Definir esquema de claves OSPF MD5, BGP TCP-MD5 y VRRP auth (R3/R4)
-- [x] Redactar la política en `docs/memoria.md` (R5)
+- [ x ] Definir usuarios y privilegios (admin, `monitor` read-only) (R2)
+- [ x ] Listar servicios a deshabilitar en los 7 routers (R1)
+- [ x ] Definir esquema de claves OSPF MD5, BGP TCP-MD5 y VRRP auth (R3/R4)
+- [ x ] Redactar la política en `docs/memoria.md` (R5)
 
 ### Feature: Política de operación
 *Criterio: formato de change log + política de backup definidos.*
