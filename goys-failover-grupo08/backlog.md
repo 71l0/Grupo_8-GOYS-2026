@@ -42,8 +42,8 @@ Formato de tarea: `- [ ] descripción (Rol)`
 
 ### Feature: Política de operación
 *Criterio: formato de change log + política de backup definidos.*
-- [ ] Definir formato del change log (fecha, rol, nodo, cambio, commit, rollback) (R5)
-- [ ] Definir política de backup (cuándo, qué, dónde, cómo se prueba la restauración) (R5)
+- [ x ] Definir formato del change log (fecha, rol, nodo, cambio, commit, rollback) (R5)
+- [ x ] Definir política de backup (cuándo, qué, dónde, cómo se prueba la restauración) (R5)
 
 ### Feature: Repositorio git
 *Criterio: estructura creada (README + backlog.md + carpetas) + commits iniciales.*
