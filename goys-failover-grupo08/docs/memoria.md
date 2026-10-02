@@ -168,3 +168,17 @@ El direccionamiento utiliza bloques separados:
 No se deben utilizar subredes repetidas entre enlaces, LANs o loopbacks.
 
 Los enlaces L2 no poseen una subred IP propia. Las direcciones IP pertenecen a las VLAN/LAN transportadas por dichos enlaces.
+
+---
+
+### 1.4 Política de operación
+
+- **Formato del change log** (convención de commits): 
+  se utilizará la convención "Conventional Commits" para el repositorio con la estructura: `tipo(alcance): descripción breve`. Los tipos permitidos estrictamente son: `feat` (nueva config/feature), `fix` (correcciones), `docs` (memoria/runbooks), `ops` (backups/change log), y `chore` (mantenimiento estructural). 
+  Asimismo, en la sección 6.1 de esta memoria, el Change Log reflejará las intervenciones en los nodos detallando: Fecha, Rol responsable, Cambio realizado (nodo afectado y descripción), Motivo del cambio (commit asociado) y Cómo se revierte (procedimiento de rollback).
+
+- **Política de backup** (cuándo y cómo): 
+  - **Cuándo:** se tomará un backup inicial (Snapshot BASE) de todos los equipos en la Fase 1. Posteriormente, se realizarán backups al finalizar cada hito o antes de aplicar un cambio crítico.
+  - **Qué y Cómo:** para cada router MikroTik CHR, se extraerá la configuración ejecutando los comandos `/export` (para tener la configuración legible) y `/system backup save` (para el binario completo).
+  - **Dónde:** estos archivos serán versionados por fecha y almacenados en el repositorio del grupo dentro de la carpeta `backups/`.
+  - **Restauración:** se documentará evidencia probando el *restore* del archivo `.backup` en un nodo para garantizar que la recuperación sea viable ante incidentes.
