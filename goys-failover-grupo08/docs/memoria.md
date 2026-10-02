@@ -1,8 +1,111 @@
-# F0 — Diseño y gestión de cambio
+# Memoria del Laboratorio — Failover Routing
 
-## 1.1 IPAM / direccionamiento
+**Grupo:** 8
+**Materia:** Gestión Operativa y Seguridad en Redes (GOYS)
+**Fecha de entrega:** viernes 23/10/2026
 
-### 1.1.1 Criterios definidos
+## Integrantes y roles
+
+| Integrante | Rol |
+|-----------|-----|
+| **Todos los miembros del grupo** | R1 — Líder / Edge-WAN |
+| Jano Stratakis | R2 — Proveedores |
+| Ulises Mateo Bucchino | R3 — Core |
+| Valentín Garzaniti | R4 — Distribución |
+| Sofia Raggi | R5 — Hosts / QA / Operación |
+
+---
+
+## 1.1 Correccion del Diagrama
+#### Corrección del diagrama
+
+Diagrama analizado: "Enterprise Network Design (Cisco)", el que vimos en clase. Le encontramos 5 defectos. Esta tabla va en la sección 1.1 de la memoria.
+
+| # | Defecto detectado | Corrección aplicada | Justificación |
+|:-:|-------------------|---------------------|---------------|
+| 1 | Hay un solo firewall (ASA 5506-X) entre el edge y el core, sin par HA. Es un punto único de falla. | En el lab no hay firewall aparte, el filtrado lo hace EDGE. Dejamos documentado que en una red real tienen que ser dos firewalls en failover (activo/standby). | Los ISR y los ISP están duplicados, pero todo el tráfico pasa por un único ASA. Si se cae, se corta la salida igual y la redundancia de arriba no sirve de nada. En el lab pasa algo parecido con EDGE, que también es uno solo; en producción irían dos. |
+| 2 | Subredes repetidas entre sitios: las VLAN 10 y 20 están en el Site 1 y en el Site 2, y la 192.168.10.0/24 aparece dos veces. | Plan de direccionamiento sin solapamientos: cada enlace y cada LAN con su propia red (ver IPAM en [`memoria.md`](../memoria.md)). | Si la misma red está en dos lugares, al interconectar los sitios el router no sabe a cuál mandar el paquete. OSPF y BGP la anuncian desde dos puntos y el tráfico termina en el sitio equivocado o se pierde. |
+| 3 | Entre C1 y C2 (los dos Nexus del core) no hay enlace. | Agregamos el enlace CORE-1 ↔ CORE-2 y corre OSPF área 0 sobre él. | Si se corta EDGE ↔ CORE-1, CORE-1 se queda sin camino directo hacia arriba y el tráfico tiene que bajar a distribución para volver a subir por CORE-2. Con el enlace core-core pasa directo al otro core y OSPF tiene una ruta alternativa corta. |
+| 4 | HSRP en el core (VLAN 10, 20 y 30 en los Nexus 9300). Es un diseño "collapsed": el core hace también de gateway de los usuarios. | El gateway pasa a distribución con VRRP entre DIST-1 y DIST-2. El core queda solo para rutear (tránsito puro). | El core tiene que hacer una sola cosa y hacerla rápido. Si además es gateway, un problema de una LAN (ARP, broadcast, cambio de master) termina afectando al equipo del que depende toda la red. En distribución el problema queda en esa capa. Usamos VRRP y no HSRP porque VRRP es estándar (RFC 5798) y HSRP es de Cisco (RFC 2281); en MikroTik no existe HSRP. |
+| 5 | El iBGP con route reflector está mal ubicado: la sesión aparece entre las interfaces outside del ASA, atravesando el firewall. | Sin iBGP y sin route reflector. BGP corre solo en EDGE (AS 65000), como eBGP hacia ISP-1 (AS 65001) e ISP-2 (AS 65002). Adentro se usa OSPF. | Un route reflector sirve cuando hay muchos routers iBGP en el mismo AS y no querés hacer full-mesh. Acá hay un solo router de borde, no hay nada que reflejar. Además, si el RR existiera tendría que estar en los routers de borde, no del otro lado del firewall. BGP queda para hablar con los proveedores y OSPF para adentro. |
+
+### Otras cosas que vimos
+
+En el análisis también aparecen problemas que no son de ruteo: no hay QoS para voz, no hay VLAN de gestión y faltan protecciones de capa 2 (port-security, DHCP snooping, DAI, root guard). No los corregimos porque el lab se centra en el failover de ruteo (VRRP, OSPF y BGP), pero los anotamos.
+
+### Topología corregida
+
+Así queda la red después de aplicar las correcciones. Las direcciones IP no van acá, están en el IPAM ([`memoria.md`](../memoria.md)).
+
+```
+[ INTERNET ]        ISP-1 (AS 65001)               ISP-2 (AS 65002)
+                           \                             /
+                            \ eBGP                 eBGP /
+                             \                         /
+[ EDGE ]                        EDGE (AS 65000)
+                        eBGP x2 + OSPF + filtrado de borde        <- correcciones 1 y 5
+                             /                         \
+                            / OSPF                OSPF  \
+                           /                             \
+[ CORE ]               CORE-1 ------- core-core ------- CORE-2    <- corrección 3
+                         |    \                       /    |
+                         |     \                     /     |
+                         |      \___________________/      |
+                         |       ___________________       |
+                         |      /                   \      |
+                         |     /                     \     |
+[ DISTRIBUTION ]       DIST-1                         DIST-2      <- corrección 4
+                   VRRP 10 master                 VRRP 10 backup
+                   VRRP 20 backup                 VRRP 20 master
+                         |     \                     /     |
+                         |      \___________________/      |
+                         |       ___________________       |
+                         |      /                   \      |
+                         |     /                     \     |
+[ ACCESS ]         SW-ACC-USERS                   SW-ACC-SERVERS
+                         |                               |
+                      PC-USER                        PC-SERVER
+```
+
+Las líneas cruzadas son:
+- Entre core y distribución: cada DIST está conectado a los dos core (DIST-1 a CORE-2 y DIST-2 a CORE-1).
+- Entre distribución y acceso: cada DIST está conectado a los dos switches, porque VRRP necesita que los dos routers estén en la misma LAN.
+
+### Enlaces
+
+| # | Enlace | Capa |
+|:-:|--------|------|
+| 1 | ISP-1 ↔ EDGE | Internet / Edge |
+| 2 | ISP-2 ↔ EDGE | Internet / Edge |
+| 3 | EDGE ↔ CORE-1 | Edge / Core |
+| 4 | EDGE ↔ CORE-2 | Edge / Core |
+| 5 | CORE-1 ↔ CORE-2 | Core (el que faltaba) |
+| 6 | CORE-1 ↔ DIST-1 | Core / Distribución |
+| 7 | CORE-1 ↔ DIST-2 | Core / Distribución |
+| 8 | CORE-2 ↔ DIST-1 | Core / Distribución |
+| 9 | CORE-2 ↔ DIST-2 | Core / Distribución |
+| 10 | DIST-1 ↔ SW-ACC-USERS | Distribución / Acceso |
+| 11 | DIST-2 ↔ SW-ACC-USERS | Distribución / Acceso |
+| 12 | DIST-1 ↔ SW-ACC-SERVERS | Distribución / Acceso |
+| 13 | DIST-2 ↔ SW-ACC-SERVERS | Distribución / Acceso |
+| 14 | SW-ACC-USERS ↔ PC-USER | Acceso |
+| 15 | SW-ACC-SERVERS ↔ PC-SERVER | Acceso |
+
+En total son 11 nodos (7 routers, 2 switches y 2 hosts) y 15 enlaces, lo mismo que dice la consigna. En F1 lo comparamos con el proyecto de GNS3.
+
+### Qué cambió con respecto al original
+
+| Original | Corregido |
+|----------|-----------|
+| Un solo ASA como firewall | Filtrado en EDGE; en producción, dos firewalls en failover |
+| Redes repetidas entre sitios | Cada red es única (ver IPAM en [`memoria.md`](../memoria.md)) |
+| C1 y C2 sin enlace entre sí | Enlace CORE-1 ↔ CORE-2 |
+| HSRP en el core | VRRP en DIST-1 / DIST-2, el core solo rutea |
+| iBGP con route reflector a través del ASA | eBGP solo en EDGE, sin RR, OSPF adentro |
+---
+## 1.2 IPAM / direccionamiento
+
+### 1.2.1 Criterios definidos
 
 - 7 routers MikroTik CHR.
 - 2 switches.
@@ -20,7 +123,7 @@
 - PC-USER: `192.168.10.100/24`, gateway `192.168.10.1`.
 - PC-SERVER: `192.168.20.100/24`, gateway `192.168.20.1`.
 
-### 1.1.2 Criterio de direccionamiento
+### 1.2.2 Criterio de direccionamiento
 
 | Elemento | Criterio |
 |---|---|
@@ -33,7 +136,7 @@
 | VRRP SERVERS | VRID `20` |
 | Solapamiento de subredes | No permitido |
 
-### 1.1.3 Tabla de direccionamiento de ENLACES
+### 1.2.3 Tabla de direccionamiento de ENLACES
 
 #### Enlaces de Capa 3 con subred `/30`.
 
@@ -69,7 +172,7 @@ Los enlaces entre los routers de distribución y los switches de acceso son trun
 | 10 | USERS | `192.168.10.0/24` | `192.168.10.1` | PC-USER |
 | 20 | SERVERS | `192.168.20.0/24` | `192.168.20.1` | PC-SERVER |
 
-### 1.1.4 LAN USERS
+### 1.2.4 LAN USERS
 
 **VLAN:** ` 10 - USERS `
 **Red:** `192.168.10.0/24`
@@ -97,7 +200,7 @@ Los enlaces entre los routers de distribución y los switches de acceso son trun
 
 Clave autenticacion: definida como secreto compartido entre DIST-1 y DIST-2.
 
-### 1.1.5 LAN SERVERS
+### 1.2.5 LAN SERVERS
 
 **Red:** `192.168.20.0/24`
 
@@ -123,7 +226,7 @@ Clave autenticacion: definida como secreto compartido entre DIST-1 y DIST-2.
 
 Clave autenticacion: definida como secreto compartido entre DIST-1 y DIST-2.
 
-### 1.1.6 Loopbacks y Router-ID
+### 1.2.6 Loopbacks y Router-ID
 
 | Nodo | Rol | Loopback | Router-ID |
 |---|---|---|---|
@@ -137,7 +240,7 @@ Clave autenticacion: definida como secreto compartido entre DIST-1 y DIST-2.
 
 > Los Router-ID de CORE-1 y CORE-2 están definidos por el diagrama.
 
-### 1.1.7 Resumen de redes
+### 1.2.7 Resumen de redes
 | Uso             | Red/VLAN          | Máscara           | Tipo       |
 | --------------- | ----------------- | ----------------- | ---------- |
 | ISP-1 ↔ EDGE    | `10.255.0.0/30`   | `255.255.255.252` | L3 P2P     |
@@ -153,7 +256,7 @@ Clave autenticacion: definida como secreto compartido entre DIST-1 y DIST-2.
 | VLAN 20 SERVERS | `192.168.20.0/24` | `255.255.255.0`   | LAN / VRRP |
 | Loopbacks       | 7 × `/32`         | `255.255.255.255` | Router-ID  |
 
-### 1.1.8 Verificación de solapamiento
+### 1.2.8 Verificación de solapamiento
 
 El direccionamiento utiliza bloques separados:
 
@@ -168,13 +271,13 @@ No se deben utilizar subredes repetidas entre enlaces, LANs o loopbacks.
 
 Los enlaces L2 no poseen una subred IP propia. Las direcciones IP pertenecen a las VLAN/LAN transportadas por dichos enlaces.
 
-## 1.2 Política de seguridad
+## 1.3 Política de seguridad
 
 Alcance: los **7 routers CHR** (ISP-1, ISP-2, EDGE, CORE-1, CORE-2, DIST-1, DIST-2), RouterOS 7.
 
 Principio rector: **mínimo privilegio y mínima superficie de ataque**. Cada usuario tiene solo los permisos que necesita, cada servicio que no se usa se apaga, y todo protocolo de control (OSPF, BGP, VRRP) se autentica para que ningún equipo no autorizado pueda inyectar rutas o tomar el gateway.
 
-### 1.2.1 Usuarios y privilegios
+### 1.3.1 Usuarios y privilegios
 
 | Usuario | Grupo | Permisos | Uso |
 |---------|-------|----------|-----|
@@ -193,7 +296,7 @@ Reglas:
 /user add name=monitor group=monitor password=<MONITOR_PASS>
 ```
 
-### 1.2.2 Servicios a deshabilitar
+### 1.3.2 Servicios a deshabilitar
 
 #### 1.3.2.1 Servicios de gestión (`/ip service`)
 
@@ -215,7 +318,7 @@ SSH y Winbox se restringen a redes internas en F3, con el firewall del EDGE.
 /ip ssh set strong-crypto=yes
 ```
 
-#### 1.2.2.2 Otros servicios y descubrimiento
+#### 1.3.2.2 Otros servicios y descubrimiento
 
 | Servicio | Decisión | Motivo |
 |----------|:--------:|--------|
@@ -241,9 +344,9 @@ SSH y Winbox se restringen a redes internas en F3, con el firewall del EDGE.
 
 > ⚠️ Si alguien gestiona por **Winbox vía MAC** dentro de GNS3, apagar MAC-Winbox lo deja afuera. Conectarse por IP (Winbox o SSH) o por la consola de GNS3, que no se ve afectada.
 
-### 1.2.3 Claves de autenticación del plano de control
+### 1.3.3 Claves de autenticación del plano de control
 
-#### 1.2.3.1 Resumen
+#### 1.3.3.1 Resumen
 
 | Protocolo | Mecanismo | Dónde | Alcance de la clave | Responsable |
 |-----------|-----------|-------|---------------------|-------------|
@@ -257,7 +360,7 @@ Criterio:
 - **BGP**: cada sesión es una relación con otra organización (cada ISP). Si la clave de un proveedor se filtra, la sesión con el otro sigue protegida.
 - **VRRP**: una clave por grupo, para que un error de configuración en un grupo no afecte al otro.
 
-#### 1.2.3.2 Convención de claves
+#### 1.3.3.2 Convención de claves
 
 | Clave | Identificador | Requisito |
 |-------|---------------|-----------|
@@ -269,7 +372,7 @@ Criterio:
 
 **Las claves reales no se commitean al repo.** En los `.rsc` y en la memoria se usan los placeholders de la tabla. Las claves reales se comparten por un canal privado del grupo y se le pasan al docente si las pide.
 
-#### 1.2.3.3 Configuración de referencia
+#### 1.3.3.3 Configuración de referencia
 
 **OSPF MD5:** se aplica en el interface-template de cada router OSPF.
 
@@ -294,14 +397,14 @@ Criterio:
 
 > ⚠️ **VRRPv3 (RFC 5798), que es el default de RouterOS 7, no soporta autenticación.** El RFC la eliminó porque una clave simple viaja en texto plano y no aporta seguridad real. Para cumplir la consigna se usa **VRRPv2 (RFC 3768) con auth simple**. Conviene saberlo para la defensa: la auth simple de VRRP evita errores de configuración (un router mal configurado que se suma al grupo), pero no frena a un atacante que capture el tráfico.
 
-### 1.2.4 Relación con backups
+### 1.3.4 Relación con backups
 
 - `/export` en RouterOS 7 **oculta los datos sensibles por defecto**: passwords y claves no aparecen. Por eso los `/export` del directorio `backups/` se pueden versionar sin filtrar claves.
 - Al restaurar desde un `/export` hay que **volver a cargar las claves** a mano.
 - Los archivos binarios de `/system backup save` sí contienen las claves. Se generan **siempre con password** (`/system backup save password=<BACKUP_PASS>`) y solo entonces se versionan en `backups/`, según la política de operación (sección 1.4 de la memoria). Un `.backup` sin password no se commitea.
 - `<BACKUP_PASS>` sigue la misma regla que las demás claves: no se commitea y se comparte por el canal privado del grupo.
 
-### 1.2.5 Verificación (F1 y F4)
+### 1.3.5 Verificación (F1 y F4)
 
 | Control | Cómo se verifica | Resultado esperado |
 |---------|------------------|--------------------|
@@ -316,7 +419,7 @@ Las tres últimas son la **prueba obligatoria de clave incorrecta** del Epic F4 
 
 ---
 
-## 1.3 Política de operación
+## 1.4 Política de operación
 
 - **Formato del change log** (convención de commits): 
   se utilizará la convención "Conventional Commits" para el repositorio con la estructura: `tipo(alcance): descripción breve`. Los tipos permitidos estrictamente son: `feat` (nueva config/feature), `fix` (correcciones), `docs` (memoria/runbooks), `ops` (backups/change log), y `chore` (mantenimiento estructural). 
