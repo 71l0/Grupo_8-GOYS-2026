@@ -22,23 +22,23 @@ Formato de tarea: `- [ ] descripción (Rol)`
 
 ### Feature: IPAM / direccionamiento
 *Criterio: tabla completa (enlaces + LANs + VRRP + router-ids), sin solapamiento.*
-- [ ] Definir plan de direccionamiento de enlaces punto a punto (R1)
-- [ ] Definir LANs USERS/SERVERS, VIPs VRRP y gateways virtuales (R4)
-- [ ] Definir loopbacks / router-ids de los 7 routers y rangos de ISP (R3)
-- [ ] Revisar que no haya solapamientos y publicar la tabla en `docs/memoria.md` (R5)
+- [ x ] Definir plan de direccionamiento de enlaces punto a punto (R1)
+- [ x ] Definir LANs USERS/SERVERS, VIPs VRRP y gateways virtuales (R4)
+- [ x ] Definir loopbacks / router-ids de los 7 routers y rangos de ISP (R3)
+- [ x ] Revisar que no haya solapamientos y publicar la tabla en `docs/memoria.md` (R5)
 
 ### Feature: Corrección del diagrama
 *Criterio: ≥ 3 defectos documentados, cada uno con corrección y justificación.*
-- [ ] Documentar defecto 1 (firewall sin HA) y defecto 5 (iBGP RR) (R1)
-- [ ] Documentar defectos 3 (core–core) y 4 (HSRP en core → VRRP en dist) (R3)
-- [ ] Documentar defecto 2 (solapamiento) y dibujar diagrama corregido en `docs/diagramas/` (R5)
+- [ x ] Documentar defecto 1 (firewall sin HA) y defecto 5 (iBGP RR) (R1)
+- [ x ] Documentar defectos 3 (core–core) y 4 (HSRP en core → VRRP en dist) (R3)
+- [ x ] Documentar defecto 2 (solapamiento) y dibujar diagrama corregido en `docs/diagramas/` (R5)
 
 ### Feature: Política de seguridad
 *Criterio: usuarios/privilegios, servicios a deshabilitar y claves de auth definidos.*
-- [ ] Definir usuarios y privilegios (admin, `monitor` read-only) (R2)
-- [ ] Listar servicios a deshabilitar en los 7 routers (R1)
-- [ ] Definir esquema de claves OSPF MD5, BGP TCP-MD5 y VRRP auth (R3/R4)
-- [ ] Redactar la política en `docs/memoria.md` (R5)
+- [x] Definir usuarios y privilegios (admin, `monitor` read-only) (R2)
+- [x] Listar servicios a deshabilitar en los 7 routers (R1)
+- [x] Definir esquema de claves OSPF MD5, BGP TCP-MD5 y VRRP auth (R3/R4)
+- [x] Redactar la política en `docs/memoria.md` (R5)
 
 ### Feature: Política de operación
 *Criterio: formato de change log + política de backup definidos.*
@@ -47,9 +47,9 @@ Formato de tarea: `- [ ] descripción (Rol)`
 
 ### Feature: Repositorio git
 *Criterio: estructura creada (README + backlog.md + carpetas) + commits iniciales.*
-- [ ] Crear repo (fork o nuevo) y dar acceso al docente (R5)
-- [ ] Crear estructura de carpetas, README.md y backlog.md (R5)
-- [ ] Primer commit de cada integrante (trazabilidad por autor) (R1–R5)
+- [ x ] Crear repo (fork o nuevo) y dar acceso al docente (R5)
+- [ x ] Crear estructura de carpetas, README.md y backlog.md (R5)
+- [ x ] Primer commit de cada integrante (trazabilidad por autor) (R1–R5)
 
 ---
 
