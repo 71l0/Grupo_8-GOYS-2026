@@ -29,9 +29,9 @@ Formato de tarea: `- [ ] descripción (Rol)`
 
 ### Feature: Corrección del diagrama
 *Criterio: ≥ 3 defectos documentados, cada uno con corrección y justificación.*
-- [ ] Documentar defecto 1 (firewall sin HA) y defecto 5 (iBGP RR) (R1)
-- [ ] Documentar defectos 3 (core–core) y 4 (HSRP en core → VRRP en dist) (R3)
-- [ ] Documentar defecto 2 (solapamiento) y dibujar diagrama corregido en `docs/diagramas/` (R5)
+- [x] Documentar defecto 1 (firewall sin HA) y defecto 5 (iBGP RR) (R2)
+- [x] Documentar defectos 3 (core–core) y 4 (HSRP en core → VRRP en dist) (R2)
+- [x] Documentar defecto 2 (solapamiento) y dibujar diagrama corregido en `docs/diagramas/` (R2)
 
 ### Feature: Política de seguridad
 *Criterio: usuarios/privilegios, servicios a deshabilitar y claves de auth definidos.*
