@@ -10,4 +10,8 @@ Diagrama analizado: "Enterprise Network Design (Cisco)", el que vimos en clase. 
 | 4 | HSRP en el core (VLAN 10, 20 y 30 en los Nexus 9300). Es un diseño "collapsed": el core hace también de gateway de los usuarios. | El gateway pasa a distribución con VRRP entre DIST-1 y DIST-2. El core queda solo para rutear (tránsito puro). | El core tiene que hacer una sola cosa y hacerla rápido. Si además es gateway, un problema de una LAN (ARP, broadcast, cambio de master) termina afectando al equipo del que depende toda la red. En distribución el problema queda en esa capa. Usamos VRRP y no HSRP porque VRRP es estándar (RFC 5798) y HSRP es de Cisco (RFC 2281); en MikroTik no existe HSRP. |
 | 5 | El iBGP con route reflector está mal ubicado: la sesión aparece entre las interfaces outside del ASA, atravesando el firewall. | Sin iBGP y sin route reflector. BGP corre solo en EDGE (AS 65000), como eBGP hacia ISP-1 (AS 65001) e ISP-2 (AS 65002). Adentro se usa OSPF. | Un route reflector sirve cuando hay muchos routers iBGP en el mismo AS y no querés hacer full-mesh. Acá hay un solo router de borde, no hay nada que reflejar. Además, si el RR existiera tendría que estar en los routers de borde, no del otro lado del firewall. BGP queda para hablar con los proveedores y OSPF para adentro. |
 
+## Otras cosas que vimos
+
+En el análisis también aparecen problemas que no son de ruteo: no hay QoS para voz, no hay VLAN de gestión y faltan protecciones de capa 2 (port-security, DHCP snooping, DAI, root guard). No los corregimos porque en este lab el acceso es un switch simple sin VLANs, pero los anotamos.
+
 El diagrama corregido está en [`topologia-corregida.md`](topologia-corregida.md).
