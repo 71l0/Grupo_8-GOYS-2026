@@ -82,8 +82,8 @@ Formato de tarea: `- [ ] descripción (Rol)`
 
 ### Feature: Backup inicial
 *Criterio: `/export` de cada router versionado en el repo.*
-- [ ] Exportar `/export` de los 7 routers a `backups/` (cada rol el suyo)
-- [ ] Commit `ops(backup): backup post-F1` y registro en change log (R5)
+- [ x ] Exportar `/export` de los 7 routers a `backups/` (cada rol el suyo)
+- [ x ] Commit `ops(backup): backup post-F1` y registro en change log (R5)
 
 ---
 
