@@ -57,9 +57,9 @@ Formato de tarea: `- [ ] descripción (Rol)`
 
 ### Feature: Despliegue
 *Criterio: 7 CHR + 2 switches + 2 hosts levantados y cableados según el diagrama.*
-- [ ] Importar proyecto GNS3 `topologia_failover_routing` en todas las laptops (R5)
-- [ ] Verificar cableado de los 15 enlaces contra el diagrama (R1)
-- [ ] Levantar nodos y confirmar acceso por consola (R5)
+- [ x ] Importar proyecto GNS3 `topologia_failover_routing` en todas las laptops (R5)
+- [ x ] Verificar cableado de los 15 enlaces contra el diagrama (R1)
+- [ x ] Levantar nodos y confirmar acceso por consola (R5)
 
 ### Feature: IPs de enlace + loopbacks
 *Criterio: ping entre vecinos directos OK.*

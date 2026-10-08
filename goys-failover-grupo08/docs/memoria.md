@@ -430,3 +430,13 @@ Las tres últimas son la **prueba obligatoria de clave incorrecta** del Epic F4 
   - **Qué y Cómo:** para cada router MikroTik CHR, se extraerá la configuración ejecutando los comandos `/export` (para tener la configuración legible) y `/system backup save` (para el binario completo).
   - **Dónde:** estos archivos serán versionados por fecha y almacenados en el repositorio del grupo dentro de la carpeta `backups/`.
   - **Restauración:** se documentará evidencia probando el *restore* del archivo `.backup` en un nodo para garantizar que la recuperación sea viable ante incidentes.
+
+## 2. Topologia
+### 2.1 Despliegue
+![TOPOLOGIA](diagramas/TOPOLOGIA.png)
+
+Se realizó el despliegue de la infraestructura definida durante la parte F0 en el entorno GNS3. La topología está compuesta por **siete routers MikroTik CHR** correspondientes a ISP-1, ISP-2, EDGE, CORE-1, CORE-2, DIST-1 y DIST-2, **dos switches de acceso** y **dos hosts finales**, totalizando **11 nodos y 15 enlaces**.
+
+Los routers ISP-1 e ISP-2 representan los proveedores externos, mientras que EDGE implementa posteriormente la función de multi-homing. CORE-1 y CORE-2 conforman la capa de Core, con un enlace directo entre ambos. DIST-1 y DIST-2 conforman la capa de Distribution y se encuentran conectados redundantemente con ambos routers Core y con los switches de acceso.
+
+En la capa Access se desplegaron SW-ACC-USERS y SW-ACC-SERVERS, conectados respectivamente con PC-USER y SRV. Los hosts fueron preparados con las direcciones `192.168.10.100/24` y `192.168.20.100/24`, respectivamente, utilizando como gateways virtuales las direcciones `192.168.10.1` y `192.168.20.1`.
