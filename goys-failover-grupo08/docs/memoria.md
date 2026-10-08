@@ -440,3 +440,68 @@ Se realizó el despliegue de la infraestructura definida durante la parte F0 en 
 Los routers ISP-1 e ISP-2 representan los proveedores externos, mientras que EDGE implementa posteriormente la función de multi-homing. CORE-1 y CORE-2 conforman la capa de Core, con un enlace directo entre ambos. DIST-1 y DIST-2 conforman la capa de Distribution y se encuentran conectados redundantemente con ambos routers Core y con los switches de acceso.
 
 En la capa Access se desplegaron SW-ACC-USERS y SW-ACC-SERVERS, conectados respectivamente con PC-USER y SRV. Los hosts fueron preparados con las direcciones `192.168.10.100/24` y `192.168.20.100/24`, respectivamente, utilizando como gateways virtuales las direcciones `192.168.10.1` y `192.168.20.1`.
+
+### 2.2 IPs de enlace + Loopbacks
+
+Se realizo la configuracion de las direcciones IP correspondientes a los enlaces punto a punto, interfaces LAN/VLAN y loopbacks de los routers que forman parte de la arquitectura.
+
+Las direcciones utilizadas fueron definidas mediante subredes `/30` para los enlaces punto a punto, mientras que las redes de usuarios y servidores se implementaron mediante las VLAN correspondientes.
+
+| Dispositivo | Interfaz / Enlace | Dirección IP | Máscara | Función |
+|-------------|-------------------|--------------|---------|---------|
+| **ISP-1** | Enlace ISP-1 ↔ EDGE | `10.255.0.2/30` | `/30` | Enlace WAN |
+| **ISP-1** | Loopback | `1.1.1.1/32` | `/32` | Router-ID / identificación estable |
+| **ISP-2** | Enlace ISP-2 ↔ EDGE | `10.255.0.6/30` | `/30` | Enlace WAN |
+| **ISP-2** | Loopback | `2.2.2.2/32` | `/32` | Router-ID / identificación estable |
+| **EDGE** | Enlace EDGE ↔ ISP-1 | `10.255.0.1/30` | `/30` | Enlace WAN |
+| **EDGE** | Enlace EDGE ↔ ISP-2 | `10.255.0.5/30` | `/30` | Enlace WAN |
+| **EDGE** | Enlace EDGE ↔ CORE-1 | `10.255.0.9/30` | `/30` | Enlace interno |
+| **EDGE** | Enlace EDGE ↔ CORE-2 | `10.255.0.13/30` | `/30` | Enlace interno |
+| **EDGE** | Loopback | `3.3.3.3/32` | `/32` | Router-ID / identificación estable |
+| **CORE-1** | Enlace CORE-1 ↔ EDGE | `10.255.0.10/30` | `/30` | Enlace interno |
+| **CORE-1** | Enlace CORE-1 ↔ CORE-2 | `10.255.0.17/30` | `/30` | Enlace Core-Core |
+| **CORE-1** | Enlace CORE-1 ↔ DIST-1 | `10.255.0.21/30` | `/30` | Enlace hacia Distribution |
+| **CORE-1** | Enlace CORE-1 ↔ DIST-2 | `10.255.0.25/30` | `/30` | Enlace hacia Distribution |
+| **CORE-1** | Loopback | `4.4.4.4/32` | `/32` | Router-ID OSPF |
+| **CORE-2** | Enlace CORE-2 ↔ EDGE | `10.255.0.14/30` | `/30` | Enlace interno |
+| **CORE-2** | Enlace CORE-2 ↔ CORE-1 | `10.255.0.18/30` | `/30` | Enlace Core-Core |
+| **CORE-2** | Enlace CORE-2 ↔ DIST-1 | `10.255.0.29/30` | `/30` | Enlace hacia Distribution |
+| **CORE-2** | Enlace CORE-2 ↔ DIST-2 | `10.255.0.33/30` | `/30` | Enlace hacia Distribution |
+| **CORE-2** | Loopback | `5.5.5.5/32` | `/32` | Router-ID OSPF |
+| **DIST-1** | Enlace DIST-1 ↔ CORE-1 | `10.255.0.22/30` | `/30` | Enlace hacia Core |
+| **DIST-1** | Enlace DIST-1 ↔ CORE-2 | `10.255.0.30/30` | `/30` | Enlace hacia Core |
+| **DIST-1** | VLAN USERS | `192.168.10.2/24` | `/24` | Gateway físico de USERS |
+| **DIST-1** | VLAN SERVERS | `192.168.20.2/24` | `/24` | Gateway físico de SERVERS |
+| **DIST-1** | Loopback | `6.6.6.6/32` | `/32` | Router-ID / identificación estable |
+| **DIST-2** | Enlace DIST-2 ↔ CORE-1 | `10.255.0.26/30` | `/30` | Enlace hacia Core |
+| **DIST-2** | Enlace DIST-2 ↔ CORE-2 | `10.255.0.34/30` | `/30` | Enlace hacia Core |
+| **DIST-2** | VLAN USERS | `192.168.10.3/24` | `/24` | Gateway físico de USERS |
+| **DIST-2** | VLAN SERVERS | `192.168.20.3/24` | `/24` | Gateway físico de SERVERS |
+| **DIST-2** | Loopback | `7.7.7.7/32` | `/32` | Router-ID / identificación estable |
+
+#### 2.2.1 Configuracion de CORE1
+![Configuracion de CORE1](../capturas/F1/config-CORE1.png)
+
+#### 2.2.1 Configuracion de CORE2
+![Configuracion de CORE2](../capturas/F1/config-CORE2.png)
+
+#### 2.2.1 Configuracion de DIST1
+![Configuracion de DIST1](../capturas/F1/config-DIST1.png)
+
+#### 2.2.1 Configuracion de DIST2
+![Configuracion de DIST2](../capturas/F1/config-DIST2.png)
+
+#### 2.2.1 Configuracion de EDGE
+![Configuracion de EDGE](../capturas/F1/config-EDGE.png)
+
+#### 2.2.1 Configuracion de ISP1
+![Configuracion de ISP1](../capturas/F1/config-ISP1.png)
+
+#### 2.2.1 Configuracion de ISP2
+![Configuracion de ISP2](../capturas/F1/config-ISP2.png)
+
+#### 2.2.1 Configuracion de PC-SERVER
+![Configuracion de PC-SERVER](../capturas/F1/config-PC-SERVER.png)
+
+#### 2.2.1 Configuracion de PC-USER
+![Configuracion de PC-USER](../capturas/F1/config-PC-USER.png)
