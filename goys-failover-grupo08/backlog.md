@@ -63,15 +63,15 @@ Formato de tarea: `- [ ] descripción (Rol)`
 
 ### Feature: IPs de enlace + loopbacks
 *Criterio: ping entre vecinos directos OK.*
-- [ ] Configurar IPs de enlace y loopback en EDGE, ISP-1, ISP-2 (R1/R2)
-- [ ] Configurar IPs de enlace y loopback en CORE-1, CORE-2 (R3)
-- [ ] Configurar IPs de enlace, LANs y loopback en DIST-1, DIST-2 (R4)
-- [ ] Verificar ping entre vecinos directos y capturar evidencia (R5)
+- [ x ] Configurar IPs de enlace y loopback en EDGE, ISP-1, ISP-2 (R1/R2)
+- [ x ] Configurar IPs de enlace y loopback en CORE-1, CORE-2 (R3)
+- [ x ] Configurar IPs de enlace, LANs y loopback en DIST-1, DIST-2 (R4)
+- [ x ] Verificar ping entre vecinos directos y capturar evidencia (R5)
 
 ### Feature: Snapshot BASE
 *Criterio: tomado y documentado.*
-- [ ] Tomar snapshot BASE de todos los nodos (R5)
-- [ ] Documentar el snapshot en el change log (R5)
+- [ x ] Tomar snapshot BASE de todos los nodos (R5)
+- [ x ] Documentar el snapshot en el change log (R5)
 
 ### Feature: Hardening
 *Criterio: password admin + usuario `monitor` + servicios apagados en los 7 routers.*
