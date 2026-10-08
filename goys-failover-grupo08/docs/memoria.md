@@ -505,3 +505,29 @@ Las direcciones utilizadas fueron definidas mediante subredes `/30` para los enl
 
 #### 2.2.1 Configuracion de PC-USER
 ![Configuracion de PC-USER](../capturas/F1/config-PC-USER.png)
+
+### 2.3 Hardening
+
+Se realizo el hardening de los routers ISP-1 e ISP-2 segun la politica de seguridad definida en F0 (seccion 1.3).
+
+Se deshabilitaron los servicios que no se utilizan, se dejaron habilitados solo los servicios de gestion y se creo el grupo de solo lectura `monitor`. La configuracion aplicada se puede ver en los respaldos `isp1.rsc` e `isp2.rsc`.
+
+| Dispositivo | Medida | Configuración | Función |
+|-------------|--------|---------------|---------|
+| **ISP-1** | Grupo `monitor` | `policy=ssh,read,test,winbox` | Acceso de solo lectura |
+| **ISP-1** | Servicios deshabilitados | `ftp`, `telnet`, `www`, `www-ssl`, `api`, `api-ssl` | Reducir servicios expuestos |
+| **ISP-1** | Servicios habilitados | `ssh`, `winbox` | Acceso de gestion |
+| **ISP-1** | SSH | `strong-crypto=yes` | Cifrado fuerte en SSH |
+| **ISP-1** | Neighbor discovery | `discover-interface-list=none` | No anunciar el equipo a los vecinos |
+| **ISP-1** | MAC server / MAC winbox | `allowed-interface-list=none` | Sin acceso por direccion MAC |
+| **ISP-1** | Bandwidth server | `enabled=no` | Servicio deshabilitado |
+| **ISP-2** | Grupo `monitor` | `policy=ssh,read,test,winbox` | Acceso de solo lectura |
+| **ISP-2** | Servicios deshabilitados | `ftp`, `telnet`, `www`, `www-ssl`, `api`, `api-ssl` | Reducir servicios expuestos |
+| **ISP-2** | Servicios habilitados | `ssh`, `winbox` | Acceso de gestion |
+| **ISP-2** | SSH | `strong-crypto=yes` | Cifrado fuerte en SSH |
+| **ISP-2** | Neighbor discovery | `discover-interface-list=none` | No anunciar el equipo a los vecinos |
+| **ISP-2** | MAC server / MAC winbox | `allowed-interface-list=none` | Sin acceso por direccion MAC |
+| **ISP-2** | Bandwidth server | `enabled=no` | Servicio deshabilitado |
+
+#### 2.3.1 Hardening de ISP1
+![Hardening de ISP1](../capturas/F1/hardeningSeguridad.png)
