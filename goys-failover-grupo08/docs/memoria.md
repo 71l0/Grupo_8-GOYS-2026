@@ -505,3 +505,22 @@ Las direcciones utilizadas fueron definidas mediante subredes `/30` para los enl
 
 #### 2.2.1 Configuracion de PC-USER
 ![Configuracion de PC-USER](../capturas/F1/config-PC-USER.png)
+
+### 2.3 Hardening
+
+#### 2.3.1 Hardening de ISP-1 e ISP-2
+
+Se aplicó sobre ISP-1 e ISP-2 el hardening definido en la política de seguridad (sección 1.3). La configuración es la misma en los dos routers y se puede ver en los respaldos `backups/2026-10-08_F1_BASE/isp1.rsc` e `isp2.rsc`.
+
+| Medida | Configuración aplicada | ISP-1 | ISP-2 |
+|--------|------------------------|:-----:|:-----:|
+| Grupo de solo lectura `monitor` | `/user group add name=monitor policy=ssh,read,test,winbox` (sin `write`, `policy`, `password` ni `sensitive`) | Sí | Sí |
+| Servicios deshabilitados | `ftp`, `telnet`, `www`, `www-ssl`, `api`, `api-ssl` | Sí | Sí |
+| Servicios de gestión habilitados | `ssh` y `winbox` | Sí | Sí |
+| SSH con cifrado fuerte | `/ip ssh set strong-crypto=yes` | Sí | Sí |
+| Neighbor discovery deshabilitado | `/ip neighbor discovery-settings set discover-interface-list=none` | Sí | Sí |
+| MAC server y MAC winbox deshabilitados | `/tool mac-server set allowed-interface-list=none` y `/tool mac-server mac-winbox set allowed-interface-list=none` | Sí | Sí |
+| Bandwidth server deshabilitado | `/tool bandwidth-server set enabled=no` | Sí | Sí |
+
+#### 2.3.1 Servicios de ISP-1 luego del hardening
+![Hardening ISP-1](../capturas/F1/hardeningSeguridad.png)
