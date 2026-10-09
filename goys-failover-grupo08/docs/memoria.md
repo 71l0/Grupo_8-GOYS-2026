@@ -508,26 +508,31 @@ Las direcciones utilizadas fueron definidas mediante subredes `/30` para los enl
 
 ### 2.3 Hardening
 
-Se realizo el hardening de los routers ISP-1 e ISP-2 segun la politica de seguridad definida en F0 (seccion 1.3).
+Se realizo el hardening de los 7 routers (ISP-1, ISP-2, EDGE, CORE-1, CORE-2, DIST-1 y DIST-2) segun la politica de seguridad definida en F0 (seccion 1.3).
 
-Se deshabilitaron los servicios que no se utilizan, se dejaron habilitados solo los servicios de gestion y se creo el grupo de solo lectura `monitor`. La configuracion aplicada se puede ver en los respaldos `isp1.rsc` e `isp2.rsc`.
+Se deshabilitaron los servicios que no se utilizan, se dejaron habilitados solo los servicios de gestion y se creo el grupo de solo lectura `monitor`. La configuracion aplicada es la misma en todos los routers y se puede ver en los respaldos de `backups/2026-10-08_F1_BASE/`.
 
-| Dispositivo | Medida | Configuración | Función |
-|-------------|--------|---------------|---------|
-| **ISP-1** | Grupo `monitor` | `policy=ssh,read,test,winbox` | Acceso de solo lectura |
-| **ISP-1** | Servicios deshabilitados | `ftp`, `telnet`, `www`, `www-ssl`, `api`, `api-ssl` | Reducir servicios expuestos |
-| **ISP-1** | Servicios habilitados | `ssh`, `winbox` | Acceso de gestion |
-| **ISP-1** | SSH | `strong-crypto=yes` | Cifrado fuerte en SSH |
-| **ISP-1** | Neighbor discovery | `discover-interface-list=none` | No anunciar el equipo a los vecinos |
-| **ISP-1** | MAC server / MAC winbox | `allowed-interface-list=none` | Sin acceso por direccion MAC |
-| **ISP-1** | Bandwidth server | `enabled=no` | Servicio deshabilitado |
-| **ISP-2** | Grupo `monitor` | `policy=ssh,read,test,winbox` | Acceso de solo lectura |
-| **ISP-2** | Servicios deshabilitados | `ftp`, `telnet`, `www`, `www-ssl`, `api`, `api-ssl` | Reducir servicios expuestos |
-| **ISP-2** | Servicios habilitados | `ssh`, `winbox` | Acceso de gestion |
-| **ISP-2** | SSH | `strong-crypto=yes` | Cifrado fuerte en SSH |
-| **ISP-2** | Neighbor discovery | `discover-interface-list=none` | No anunciar el equipo a los vecinos |
-| **ISP-2** | MAC server / MAC winbox | `allowed-interface-list=none` | Sin acceso por direccion MAC |
-| **ISP-2** | Bandwidth server | `enabled=no` | Servicio deshabilitado |
+| Medida | Configuración | Función |
+|--------|---------------|---------|
+| Grupo `monitor` | `policy=ssh,read,test,winbox` | Acceso de solo lectura |
+| Servicios deshabilitados | `ftp`, `telnet`, `www`, `www-ssl`, `api`, `api-ssl` | Reducir servicios expuestos |
+| Servicios habilitados | `ssh`, `winbox` | Acceso de gestion |
+| SSH | `strong-crypto=yes` | Cifrado fuerte en SSH |
+| Neighbor discovery | `discover-interface-list=none` | No anunciar el equipo a los vecinos |
+| MAC server / MAC winbox | `allowed-interface-list=none` | Sin acceso por direccion MAC |
+| Bandwidth server | `enabled=no` | Servicio deshabilitado |
+
+| Dispositivo | Respaldo | Grupo `monitor` | Servicios | SSH | Neighbor discovery | MAC server / MAC winbox | Bandwidth server |
+|-------------|----------|:---------------:|:---------:|:---:|:------------------:|:-----------------------:|:----------------:|
+| **ISP-1** | `isp1.rsc` | Sí | Sí | Sí | Sí | Sí | Sí |
+| **ISP-2** | `isp2.rsc` | Sí | Sí | Sí | Sí | Sí | Sí |
+| **EDGE** | `edge.rsc` | Sí | Sí | Sí | Sí | Sí | Sí |
+| **CORE-1** | `core1.rsc` | Sí | Sí | Sí | Sí | Sí | Sí |
+| **CORE-2** | `core2.rsc` | Sí | Sí | Sí | Sí | Sí | Sí |
+| **DIST-1** | `dist1.rsc` | Sí | Sí | Sí | Sí | Sí | Sí |
+| **DIST-2** | `dist2.rsc` | Sí | Sí | Sí | Sí | Sí | Sí |
+
+Como la configuracion de servicios es la misma en los 7 routers, se adjunta como evidencia la captura de `/ip service print` tomada en ISP-1.
 
 #### 2.3.1 Hardening de ISP1
 ![Hardening de ISP1](../capturas/F1/hardeningSeguridad.png)
