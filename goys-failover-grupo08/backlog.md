@@ -75,10 +75,10 @@ Formato de tarea: `- [ ] descripción (Rol)`
 
 ### Feature: Hardening
 *Criterio: password admin + usuario `monitor` + servicios apagados en los 7 routers.*
-- [ ] Hardening de EDGE (R1)
+- [ x ] Hardening de EDGE (R1)
 - [ x ] Hardening de ISP-1 e ISP-2 (R2)
-- [ ] Hardening de CORE-1 y CORE-2 (R3)
-- [ ] Hardening de DIST-1 y DIST-2 (R4)
+- [ x ] Hardening de CORE-1 y CORE-2 (R3)
+- [ x ] Hardening de DIST-1 y DIST-2 (R4)
 
 ### Feature: Backup inicial
 *Criterio: `/export` de cada router versionado en el repo.*
