@@ -536,3 +536,22 @@ Como la configuracion de servicios es la misma en los 7 routers, se adjunta como
 
 #### 2.3.1 Hardening de ISP1
 ![Hardening de ISP1](../capturas/F1/hardeningSeguridad.png)
+
+### 2.4 Backup inicial
+
+Se tomó el Snapshot BASE de los 7 routers (ISP-1, ISP-2, EDGE, CORE-1, CORE-2, DIST-1, DIST-2) según la Política de operación (sección 1.4): para cada uno se ejecutó `/export` y se versionó el resultado en el repositorio, en `backups/2026-10-08_F1_BASE/`.
+
+| Router | Archivo |
+|--------|---------|
+| EDGE | `backups/2026-10-08_F1_BASE/edge.rsc` |
+| ISP-1 | `backups/2026-10-08_F1_BASE/isp1.rsc` |
+| ISP-2 | `backups/2026-10-08_F1_BASE/isp2.rsc` |
+| CORE-1 | `backups/2026-10-08_F1_BASE/core1.rsc` |
+| CORE-2 | `backups/2026-10-08_F1_BASE/core2.rsc` |
+| DIST-1 | `backups/2026-10-08_F1_BASE/dist1.rsc` |
+| DIST-2 | `backups/2026-10-08_F1_BASE/dist2.rsc` |
+
+El commit `ops(backup): agrega respaldos rsc, evidencias de conectividad y hardening F1` registra el backup inicial post-F1 junto con sus evidencias.
+
+![Snapshot BASE](../capturas/F1/snapshot_base_f1.png)
+![Export y backup por router](../capturas/F1/exportYBackupPorRouter.png)
