@@ -482,29 +482,47 @@ Las direcciones utilizadas fueron definidas mediante subredes `/30` para los enl
 #### 2.2.1 Configuracion de CORE1
 ![Configuracion de CORE1](../capturas/F1/config-CORE1.png)
 
-#### 2.2.1 Configuracion de CORE2
+#### 2.2.2 Configuracion de CORE2
 ![Configuracion de CORE2](../capturas/F1/config-CORE2.png)
 
-#### 2.2.1 Configuracion de DIST1
+#### 2.2.3 Configuracion de DIST1
 ![Configuracion de DIST1](../capturas/F1/config-DIST1.png)
 
-#### 2.2.1 Configuracion de DIST2
+#### 2.2.4 Configuracion de DIST2
 ![Configuracion de DIST2](../capturas/F1/config-DIST2.png)
 
-#### 2.2.1 Configuracion de EDGE
+#### 2.2.5 Configuracion de EDGE
 ![Configuracion de EDGE](../capturas/F1/config-EDGE.png)
 
-#### 2.2.1 Configuracion de ISP1
+#### 2.2.6 Configuracion de ISP1
 ![Configuracion de ISP1](../capturas/F1/config-ISP1.png)
 
-#### 2.2.1 Configuracion de ISP2
+#### 2.2.7 Configuracion de ISP2
 ![Configuracion de ISP2](../capturas/F1/config-ISP2.png)
 
-#### 2.2.1 Configuracion de PC-SERVER
+#### 2.2.8 Configuracion de PC-SERVER
 ![Configuracion de PC-SERVER](../capturas/F1/config-PC-SERVER.png)
 
-#### 2.2.1 Configuracion de PC-USER
+#### 2.2.9 Configuracion de PC-USER
 ![Configuracion de PC-USER](../capturas/F1/config-PC-USER.png)
+
+#### 2.2.10 Verificación de conectividad entre vecinos directos
+
+Una vez finalizada la configuración de las direcciones IP de los enlaces punto a punto, las interfaces LAN y las loopbacks, se realizaron pruebas de conectividad mediante el comando ping. Con el objetivo de comprobar que los dispositivos conectados directamente pudieran comunicarse utilizando las direcciones IP configuradas.
+
+**Registro de pruebas de conectividad**
+
+| ID | Dispositivo de origen | Dispositivo de destino | Objetivo de la prueba | Evidencia |
+|---|---|---|---|---|
+| PING-01 | DIST2 | CORE1 - CORE2 - PCSERVER - DIST1 | Verificar conectividad desde DIST2. | [Captura de ping desde DIST2](/goys-failover-grupo08/capturas/F1/pruebaConectividadCORE1-CORE2-PCSERVER-DIST1DesdeDIST2.png) |
+| PING-02 |  DIST1 | CORE1 - CORE2 - PCUSER - DIST2 | Verificar conectividad desde DIST1. | [Captura de ping desde DIST1](/goys-failover-grupo08/capturas/F1/pruebaConectividadCORE1-CORE2-PCUSER-DIST2DesdeDIST1.png) |
+| PING-03 | PC-USER | DIST1 | Verificar conectividad desde PC-USER. | [Captura de ping desde PC-USER](/goys-failover-grupo08/capturas/F1/pruebaConectividadDIST1DesdePC-USER.png) |
+| PING-04 | PC-SERVER | DIST2 | Verificar conectividad desde PC-SERVER. | [Captura de ping desde PC-SERVER](/goys-failover-grupo08/capturas/F1/pruebaConectividadDIST2DesdePC-SERVER.png) |
+| PING-05 | CORE2 | EDGE - CORE1 - DIST1 - DIST2 | Verificar conectividad desde CORE2. | [Captura de ping desde CORE2](/goys-failover-grupo08/capturas/F1/pruebaConectividadEDGE-CORE1-DIST1-DIST2DesdeCORE2.png) |
+| PING-06 | CORE1 | EDGE - CORE2 - DIST1 - DIST2 | Verificar conectividad desde CORE1. | [Captura de ping desde CORE1](/goys-failover-grupo08/capturas/F1/pruebaConectividadEDGE-CORE2-DIST1-DIST2DesdeCORE1.png) |
+| PING-07 | ISP-1 | EDGE | Verificar conectividad desde ISP-1. | [Captura de ping desde ISP-1](/goys-failover-grupo08/capturas/F1/pruebaConectividadEDGEDesdeISP-1.png) |
+| PING-08 | ISP-2 | EDGE | Verificar conectividad desde ISP-2. | [Captura de ping desde ISP-2](/goys-failover-grupo08/capturas/F1/pruebaConectividadEDGEDesdeISP-2.png) |
+| PING-09 | EDGE | ISP1 - ISP2 - CORE1 - CORE2 | Verificar conectividad desde EDGE. | [Captura de ping desde EDGE](/goys-failover-grupo08/capturas/F1/pruebaConectividadISP1-ISP2-CORE1-CORE2DesdeEDGE.png) |
 
 ### 2.3 Hardening
 
