@@ -33,12 +33,12 @@ Este repositorio permitirá:
 
 ## 👥 Integrantes del grupo
 
-| Rol | Integrante | Legajo |
-|-----|------------|-------------|
-| R1 | Ulises Mateo Bucchino | 33326 
-| R2 |  Valentín Garzaniti |  32547
-| R3 | Jano Stratakis |  30765
-| R4 | Sofia Raggi | 31532
+| Integrante | Legajo |
+|------------|-------------|
+| Ulises Mateo Bucchino | 33326 
+|  Valentín Garzaniti |  32547
+| Jano Stratakis |  30765
+| Sofia Raggi | 31532
 
 ---
 
