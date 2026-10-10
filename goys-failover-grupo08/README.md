@@ -9,12 +9,13 @@
 
 ## Integrantes y roles
 
-| Rol | Integrante | Legajo |
-|-----|------------|-------------|
-| R1 | Ulises Mateo Bucchino | 33326 
-| R2 |  Valentín Garzaniti |  32547
-| R3 | Jano Stratakis |  30765
-| R4 | Sofia Raggi | 31532
+| Integrante | Rol |
+|-----------|-----|
+| **Todos los miembros del grupo** | R1 — Líder / Edge-WAN |
+| Jano Stratakis | R2 — Proveedores |
+| Ulises Mateo Bucchino | R3 — Core |
+| Valentín Garzaniti | R4 — Distribución |
+| Sofia Raggi | R5 — Hosts / QA / Operación |
 
 ---
 

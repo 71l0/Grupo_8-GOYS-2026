@@ -33,12 +33,12 @@ Este repositorio permitirá:
 
 ## 👥 Integrantes del grupo
 
-| Rol | Integrante | Legajo |
-|-----|------------|-------------|
-| R1 | Ulises Mateo Bucchino | 33326 
-| R2 |  Valentín Garzaniti |  32547
-| R3 | Jano Stratakis |  30765
-| R4 | Sofia Raggi | 31532
+| Integrante | Legajo |
+|------------|-------------|
+| Ulises Mateo Bucchino | 33326 
+|  Valentín Garzaniti |  32547
+| Jano Stratakis |  30765
+| Sofia Raggi | 31532
 
 ---
 
@@ -60,18 +60,12 @@ En esta sección se registrarán las actividades propuestas durante la cursada. 
 
 La estructura inicial propuesta busca separar las actividades, la documentación general y las evidencias generadas durante la cursada.
 
-```text
 Grupo_8-GOYS-2026/
-│
-├── README.md
-│
-├── goys-failover-grupo08/
-│
-├── goys-vrrp-grupo08/
-│
-└── goys-proyecto_integrador-grupo08/
+- README.md
+- [goys-failover-grupo08/](goys-failover-grupo08)
+- [goys-vrrp-grupo08/](goys-vrrp-grupo08)
+- [goys-proyecto_integrador-grupo08/](goys-proyecto_integrador-grupo08)
 
-```
 
 *La estructura es orientativa y podrá adaptarse a los requisitos particulares de cada entrega.*
 
