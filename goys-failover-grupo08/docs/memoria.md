@@ -573,3 +573,70 @@ El commit `ops(backup): agrega respaldos rsc, evidencias de conectividad y harde
 
 ![Snapshot BASE](../capturas/F1/snapshot_base_f1.png)
 ![Export y backup por router](../capturas/F1/exportYBackupPorRouter.png)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+### 4.2 Redistribución OSPF -> BGP en EDGE
+Segun la configuracion de enrutamiento interno implementada en F2, se configuro en EDGE el mecanimso de redistribucion de rutas OSPF hacia BGP.
+
+Con esta configuración se nos permite utilizar la información de enrutamiento interno para asi generar anuncios destinados a los vecinos BGP.
+
+Cabe aclarar, que para evitar la publicación indiscriminada de rutas, se incorporaron filtros que delimitan los prefijos autorizados para su anuncio, ya que los filtros permiten determinar que redes internas se exponen al exterior y reducen el riesgo de anunciar rutas que no corresponden a la politica de enrutamiento.
+
+![Filtros de EDGE](../capturas/F3/cadenaDeFiltros.png)
+
+![Verificación en EDGE](../capturas/F3/estadoFinalEDGE_A.png)
+
+#### 4.2.1 Verificación de las LAN anunciadas en ISP-1 y ISP-2
+
+Una vez configurada la redistribución, se consultó la tabla de rutas de ISP-1 y ISP-2 para comprobar la recepción de los prefijos internos anunciados por EDGE.
+
+Ya con la verificación se centró en identificar las redes LAN previstas en el diseño y comprobar que fueran reconocidas como rutas BGP. De este forma, se evaluó el resultado de la redistribución desde la perspectiva del primer proveedor, en lugar de limitar la comprobación a la configuración local de EDGE.
+
+![Verificación en ISP1](../capturas/F3/estadoFinalISP-1.png)
+
+![Verificación en ISP2](../capturas/F3/estadoFinalISP-2.png)
+
+#### 4.2.2 Resultado de la fase
+
+Con esta fase se implemento el mecanismo de redistribución de rutas OSPF hacia BGP en EDGE, con filtros para controlar los anuncios externos.
+
+La verificación de las tablas de enrutamiento de ISP-1 e ISP-2 nos permitió evaluar si las LAN internas definidas por el laboratorio fueron propagadas correctamente mediante BGP. El criterio de aceptación se considera cumplido cuando los prefijos esperados aparecen en ambos proveedores como rutas BGP y las capturas aportan evidencia suficiente de su recepción.
+
+De esta manera, la fase complementa la conectividad eBGP establecida en F3.1 y permite integrar el enrutamiento interno OSPF con el intercambio de rutas externo BGP.
+

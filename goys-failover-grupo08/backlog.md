@@ -122,8 +122,8 @@ Formato de tarea: `- [ ] descripción (Rol)`
 
 ### Feature: Redistribución
 *Criterio: OSPF→BGP, las LANs se anuncian a los ISP.*
-- [ ] Redistribuir OSPF→BGP en EDGE con filtros (R1)
-- [ ] Verificar que las LANs aparecen en la tabla de ISP-1 e ISP-2 (R2)
+- [ x ] Redistribuir OSPF→BGP en EDGE con filtros (R1)
+- [ x ] Verificar que las LANs aparecen en la tabla de ISP-1 e ISP-2 (R2)
 
 ### Feature: Salida a "Internet"
 *Criterio: host alcanza el loopback del ISP.*
