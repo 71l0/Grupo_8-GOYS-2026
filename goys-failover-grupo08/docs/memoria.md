@@ -591,6 +591,10 @@ Ademas, tambien se configuro la autenticacion TCP-MD5 para proteger el estableci
 #### 3.1.2 Configuración de eBGP en ISP-1 e ISP-2
 Seguido de esto, en los routers ISP-1 e ISP-2 se configuraron las conexiones BGP hacia EDGE, utilizando los parámetros de vecindad correspondientes y las mismas claves TCP-MD5 definidas en el extremo remoto para cada enlace.
 
+![Aplicacion de clave TCP-MD5 Foto1](../capturas/F3/wrongPasswordTCP-MD5.png)
+![Aplicacion de clave TCP-MD5 Foto2](../capturas/F3/wrongPasswordTCP-MD5-2.png)
+![Aplicacion de clave TCP-MD5 Foto3](../capturas/F3/wrongPasswordTCP-MD5-3.png)
+
 Ademas, tambien se configuro la opcion de anuncio de la ruta por defecto según los requisitos de la práctica, con el propósito de permitir que EDGE pudiera recibir una ruta por defecto desde los proveedores. La disponibilidad efectiva de esta ruta depende de la configuración aplicada y de la política de anuncios de cada ISP.
 
 ![Configuracion de eBGP en ISP-1](../capturas/F3/configuracionBGP-ISP1.png)
