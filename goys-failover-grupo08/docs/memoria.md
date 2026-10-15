@@ -573,3 +573,36 @@ El commit `ops(backup): agrega respaldos rsc, evidencias de conectividad y harde
 
 ![Snapshot BASE](../capturas/F1/snapshot_base_f1.png)
 ![Export y backup por router](../capturas/F1/exportYBackupPorRouter.png)
+
+
+## 3. Implementacion de BGP + firewall
+### 3.1 eBGP Multi-homing
+El objetivo de esta etapa corresponde a implementar conectividad mediante el protocolo eBGP entre el router EDGE y los dos proveedores de servicios de internet, ISP-1 e ISP-2
+
+Esta configuracion nos permite que EDGE establezca sesiones BGP independientes con ambos proveedores, proporcionando asi una arquitectura con multiples conexiones externas. Asimismo, tambien nos permite preparar la infraestructura para anunciar las redes internas hacia los ISP y disponer de información de enrutamiento intercambiada mediante BGP.
+
+#### 3.1.1 Configuracion de eBGP en EDGE
+Para comenzar, en el router EDGE se configuraron las conexiones BGP correspondientes a ISP-1 e ISP-2. Para ello, se definieron los parámetros necesarios para identificar cada vecino.
+
+Ademas, tambien se configuro la autenticacion TCP-MD5 para proteger el establecimiento de las sesiones BGP mediante una clave compartida entre cada par de vecinos.
+
+![Configuracion de eBGP en EDGE](../capturas/F3/configuracionBGP-EDGE.png)
+
+#### 3.1.2 Configuración de eBGP en ISP-1 e ISP-2
+Seguido de esto, en los routers ISP-1 e ISP-2 se configuraron las conexiones BGP hacia EDGE, utilizando los parámetros de vecindad correspondientes y las mismas claves TCP-MD5 definidas en el extremo remoto para cada enlace.
+
+Ademas, tambien se configuro la opcion de anuncio de la ruta por defecto según los requisitos de la práctica, con el propósito de permitir que EDGE pudiera recibir una ruta por defecto desde los proveedores. La disponibilidad efectiva de esta ruta depende de la configuración aplicada y de la política de anuncios de cada ISP.
+
+![Configuracion de eBGP en ISP-1](../capturas/F3/configuracionBGP-ISP1.png)
+*Configuracion de eBGP en ISP-1*
+
+![Configuracion de eBGP en ISP-2](../capturas/F3/configuracionBGP-ISP2.png)
+*Configuracion de eBGP en ISP-1*
+
+#### 3.1.3 Verificación de las sesiones BGP
+Una vez finalizada la configuración, se verificó el estado de las sesiones BGP en EDGE.
+Lo cual se realizo a partir de ejecutar `/routing/bgp/session/print`, en donde se verifico que el estado Established sea indicado en la sesión BGP establecida y que los vecinos pueden intercambiar información de enrutamiento. Se verificó que tanto ISP-1 como ISP-2 alcanzaran dicho estado, de acuerdo con el criterio de aceptación definido para esta fase.
+
+![Certificación de las sesiones eBGP en EDGE.](../capturas/F3/estadoFinalEDGE_A.png)
+
+Comprobando asi que el estado de las sesiones con ambos proveedores.
