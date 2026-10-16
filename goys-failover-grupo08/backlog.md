@@ -108,7 +108,7 @@ Formato de tarea: `- [ ] descripción (Rol)`
 *Criterio: ping intra-LAN + gateway virtual responde.*
 - [ x ] Ping host ↔ gateway virtual en ambas LANs (R5)
 - [ x ] Ping entre hosts de distintas LANs (R5)
-- [ ] Backup post-F2 y registro en change log (R5)
+- [ x ] Backup post-F2 y registro en change log (R5)
 
 ---
 
