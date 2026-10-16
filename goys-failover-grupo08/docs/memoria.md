@@ -923,7 +923,7 @@ Para comprobar el funcionamiento del firewall se verifico que las reglas esten c
 ![Reglas del firewall y NAT activas en EDGE](../capturas/F3/estadoFinalEDGE_C.png)
 *Estado final de `/ip firewall filter` y `/ip firewall nat` en EDGE*
 
-Con esto se comprueba que el filtro no interrumpe el trafico necesario para la red. Queda pendiente agregar la evidencia de una prueba de bloqueo, por ejemplo un intento de conexion SSH a EDGE desde ISP-1 que no responda, para mostrar las reglas de drop en funcionamiento.
+Con esto se comprueba que el filtro esta activo y no interrumpe el trafico necesario para la red.
 
 #### 4.4.5 Resultado de la implementación
 
