@@ -91,24 +91,24 @@ Formato de tarea: `- [ ] descripción (Rol)`
 
 ### Feature: VRRP
 *Criterio: 2 grupos (10/20) operativos con load-sharing (DIST-1 master 10, DIST-2 master 20), con auth.*
-- [ ] Configurar VRRP vrid 10 en DIST-1 (master) y DIST-2 (backup) (R4)
-- [ ] Configurar VRRP vrid 20 en DIST-2 (master) y DIST-1 (backup) (R4)
-- [ ] Activar auth en ambos grupos (R4)
-- [ ] Verificar master/backup con `/interface vrrp print` (R5)
+- [ x ] Configurar VRRP vrid 10 en DIST-1 (master) y DIST-2 (backup) (R4)
+- [ x ] Configurar VRRP vrid 20 en DIST-2 (master) y DIST-1 (backup) (R4)
+- [ x ] Activar auth en ambos grupos (R4)
+- [ x ] Verificar master/backup con `/interface vrrp print` (R5)
 
 ### Feature: OSPF área 0
 *Criterio: adyacencias FULL edge↔core↔dist (incluido core–core), con MD5.*
-- [ ] Configurar OSPF en CORE-1 y CORE-2, incluido el enlace core–core (R3)
-- [ ] Configurar OSPF en DIST-1 y DIST-2 (R4)
-- [ ] Configurar OSPF en EDGE hacia el core (R1)
-- [ ] Activar MD5 en todas las interfaces OSPF (R3)
-- [ ] Verificar adyacencias FULL con `/routing ospf neighbor print` (R5)
+- [ x ] Configurar OSPF en CORE-1 y CORE-2, incluido el enlace core–core (R3)
+- [ x ] Configurar OSPF en DIST-1 y DIST-2 (R4)
+- [ x ] Configurar OSPF en EDGE hacia el core (R1)
+- [ x ] Activar MD5 en todas las interfaces OSPF (R3)
+- [ x ] Verificar adyacencias FULL con `/routing ospf neighbor print` (R5)
 
 ### Feature: Verificación L3
 *Criterio: ping intra-LAN + gateway virtual responde.*
-- [ ] Ping host ↔ gateway virtual en ambas LANs (R5)
-- [ ] Ping entre hosts de distintas LANs (R5)
-- [ ] Backup post-F2 y registro en change log (R5)
+- [ x ] Ping host ↔ gateway virtual en ambas LANs (R5)
+- [ x ] Ping entre hosts de distintas LANs (R5)
+- [ x ] Backup post-F2 y registro en change log (R5)
 
 ---
 
@@ -116,25 +116,25 @@ Formato de tarea: `- [ ] descripción (Rol)`
 
 ### Feature: eBGP multi-homing
 *Criterio: 2 sesiones established (EDGE↔ISP-1, EDGE↔ISP-2), con TCP-MD5.*
-- [ ] Configurar eBGP en EDGE hacia ISP-1 y ISP-2 con TCP-MD5 (R1)
-- [ ] Configurar eBGP en ISP-1 e ISP-2 con TCP-MD5 y default-originate (R2)
-- [ ] Verificar ambas sesiones en estado established (R5)
+- [ x ] Configurar eBGP en EDGE hacia ISP-1 y ISP-2 con TCP-MD5 (R1)
+- [ x ] Configurar eBGP en ISP-1 e ISP-2 con TCP-MD5 y default-originate (R2)
+- [ x ] Verificar ambas sesiones en estado established (R5)
 
 ### Feature: Redistribución
 *Criterio: OSPF→BGP, las LANs se anuncian a los ISP.*
-- [ ] Redistribuir OSPF→BGP en EDGE con filtros (R1)
-- [ ] Verificar que las LANs aparecen en la tabla de ISP-1 e ISP-2 (R2)
+- [ x ] Redistribuir OSPF→BGP en EDGE con filtros (R1)
+- [ x ] Verificar que las LANs aparecen en la tabla de ISP-1 e ISP-2 (R2)
 
 ### Feature: Salida a "Internet"
 *Criterio: host alcanza el loopback del ISP.*
-- [ ] Verificar default route recibida por EDGE y propagada por OSPF (R1/R3)
-- [ ] Ping desde un host al loopback de cada ISP (R5)
+- [ x ] Verificar default route recibida por EDGE y propagada por OSPF (R1/R3)
+- [ x ] Ping desde un host al loopback de cada ISP (R5)
 
 ### Feature: Firewall edge
 *Criterio: filtro de entrada + plano de gestión protegido.*
-- [ ] Reglas de entrada (input/forward) en EDGE, con `established,related` y drop por defecto (R1)
-- [ ] Restringir acceso de gestión (SSH/Winbox) a origen permitido (R1)
-- [ ] Probar reglas y capturar evidencia (R5)
+- [ x ] Reglas de entrada (input/forward) en EDGE, con `established,related` y drop por defecto (R1)
+- [ x ] Restringir acceso de gestión (SSH/Winbox) a origen permitido (R1)
+- [ x ] Probar reglas y capturar evidencia (R5)
 
 ---
 
