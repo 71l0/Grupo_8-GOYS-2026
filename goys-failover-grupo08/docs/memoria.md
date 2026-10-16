@@ -719,6 +719,25 @@ Con esto se habilita la verificación de conectividad de capa 3 entre hosts y la
 
 Observación para la revisión: las interfaces `vlan10` y `vlan20` de DIST-1 y DIST-2 están en OSPF como interfaces activas, por eso los dos routers forman una adyacencia entre sí por las LAN. No afecta el funcionamiento, pero se podría reducir con `passive=yes` en esas interfaces si se prefiere que las LAN solo se anuncien y no formen vecindades.
 
+### 3.3 Verificación L3
+
+El objetivo de esta parte corresponde a comprobar la conectividad de capa 3 una vez configurados VRRP y OSPF. Para ello se verifico que los hosts alcancen su gateway virtual y que exista comunicacion entre las dos LAN.
+
+#### 3.3.1 Ping al gateway virtual
+
+Desde cada host se ejecuto `ping` hacia la direccion IP virtual de su grupo VRRP, que es el gateway configurado en el equipo.
+
+| Origen | Destino | Gateway virtual de | Resultado |
+|---|---|---|---|
+| PC-USER (`192.168.10.100`) | `192.168.10.1` | VRID 10 (USERS) | 3 enviados, 3 recibidos, 0 % de pérdida, TTL 64 |
+| PC-SERVER (`192.168.20.100`) | `192.168.20.1` | VRID 20 (SERVERS) | 3 enviados, 3 recibidos, 0 % de pérdida, TTL 64 |
+
+En ambos casos el gateway virtual responde, por lo que los hosts tienen salida hacia el router Master de su grupo.
+
+![Ping al gateway virtual desde PC-USER](../capturas/F2/pingGatewayVirtualDesdePC-USER.png)
+
+![Ping al gateway virtual desde PC-SERVER](../capturas/F2/pingGatewayVirtualDesdePC-SERVER.png)
+
 ## 4. Implementacion de BGP + firewall
 ### 4.1 eBGP Multi-homing
 El objetivo de esta etapa corresponde a implementar conectividad mediante el protocolo eBGP entre el router EDGE y los dos proveedores de servicios de internet, ISP-1 e ISP-2
