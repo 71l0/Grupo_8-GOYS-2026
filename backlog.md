@@ -7,10 +7,10 @@ Formato de tarea: `- [ ] descripción (Rol)`
 
 | Epic | Vence | Estado |
 |:----:|:-----:|:------:|
-| F0 — Diseño y gestión de cambio | vie 2/10 | pendiente |
-| F1 — Topología + hardening + backup | vie 9/10 | pendiente |
-| F2 — VRRP + OSPF | vie 16/10 | pendiente |
-| F3 — BGP + firewall | vie 16/10 | pendiente |
+| F0 — Diseño y gestión de cambio | vie 2/10 | completada |
+| F1 — Topología + hardening + backup | vie 9/10 | completada (restore probado y `dhcp-client` removido — memoria §2.5) |
+| F2 — VRRP + OSPF | vie 16/10 | completada |
+| F3 — BGP + firewall | vie 16/10 | completada |
 | F4 — Drills + monitoreo | mar 20/10 | pendiente |
 | F5 — Memoria + defensa | vie 23/10 | pendiente |
 
@@ -84,6 +84,15 @@ Formato de tarea: `- [ ] descripción (Rol)`
 *Criterio: `/export` de cada router versionado en el repo.*
 - [ x ] Exportar `/export` de los 7 routers a `backups/` (cada rol el suyo)
 - [ x ] Commit `ops(backup): backup post-F1` y registro en change log (R5)
+
+### Feature: Verificación de backups (restore)
+*Criterio: restore probado con evidencia en la memoria (promesa de la política de operación, sección 1.4).*
+- [ x ] Generar `/system backup save password=<BACKUP_PASS>` de los 7 routers (R5) — `F3_BASE.backup` ya existe y fue probado en ISP-1;
+- [ x ] Probar el restore de un router (reset + import del `.rsc` o `.backup`) con capturas en `capturas/` y documentación en `docs/memoria.md` (R5) — hecho el 16/10 en ISP-1 (memoria §2.5.1)
+
+### Feature: Higiene de la configuración
+*Criterio: los exports no listan clientes/servicios de fábrica innecesarios en los 7 routers.*
+- [ x ] Remover el `dhcp-client` de fábrica en los 7 routers y regenerar los exports (R1–R4) — hecho el 16/10 (memoria §2.5.2)
 
 ---
 
@@ -162,9 +171,9 @@ Formato de tarea: `- [ ] descripción (Rol)`
 ### Feature: Verificación de seguridad
 *Criterio: adyacencia/sesión con clave incorrecta FALLA (documentado).*
 - [ ] Probar OSPF con clave MD5 incorrecta y capturar evidencia (R3)
-- [ ] Probar BGP con clave TCP-MD5 incorrecta y capturar evidencia (R1/R2)
+- [ x ] Probar BGP con clave TCP-MD5 incorrecta y capturar evidencia (R1/R2) — hecho en F3; documentado en la sección 5.1 de la memoria
 - [ ] Probar VRRP con auth incorrecta y capturar evidencia (R4)
-- [ ] Documentar resultados en la memoria (R5)
+- [ ] Documentar resultados en la memoria (R5) — BGP listo (sección 5.1); faltan OSPF y VRRP
 
 ---
 

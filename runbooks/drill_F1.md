@@ -180,7 +180,7 @@ Versionar en `backups/2026-10-08_F1_BASE/`:
 | DIST-1 | `dist1.rsc` |
 | DIST-2 | `dist2.rsc` |
 
-**Probar el *restore*** en un nodo con el `.backup` para confirmar que la recuperación es viable, y capturar la evidencia.
+**Probar el *restore*** en un nodo con el `.backup` para confirmar que la recuperación es viable, y capturar la evidencia. ✅ Hecho el 16/10 en ISP-1 con `F3_BASE.backup` (memoria §2.5.1).
 
 ---
 

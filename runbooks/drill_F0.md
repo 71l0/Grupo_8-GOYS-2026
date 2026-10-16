@@ -26,7 +26,7 @@ Definir y dejar documentado el **diseño de referencia** de la red y las **polí
 
 ## 2. Prerrequisitos
 
-- Acceso de escritura al repo del grupo (`Grupo_8-GOYS-2026/goys-failover-grupo08`).
+- Acceso de escritura al repo del grupo (`Grupo_8-GOYS-2026`, raíz del laboratorio failover).
 - Diagrama/consigna original del laboratorio.
 - Canal privado del grupo para compartir claves reales (no van al repo).
 - Conocimiento de la topología de 5 capas y de los protocolos del lab (VRRP, OSPF, eBGP).

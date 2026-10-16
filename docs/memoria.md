@@ -6,18 +6,18 @@
 
 ## Integrantes y roles
 
-| Integrante | Rol |
-|-----------|-----|
-| **Todos los miembros del grupo** | R1 — Líder / Edge-WAN |
-| Jano Stratakis | R2 — Proveedores |
-| Ulises Mateo Bucchino | R3 — Core |
-| Valentín Garzaniti | R4 — Distribución |
-| Sofia Raggi | R5 — Hosts / QA / Operación |
+| Integrante | Rol principal | Rol de respaldo |
+|-----------|---------------|-----------------|
+| Ulises Mateo Bucchino | R1 — Líder / Edge-WAN | R3 — Core |
+| Jano Stratakis | R2 — Proveedores | R3 — Core |
+| Valentín Garzaniti | R4 — Distribución | R2 — Proveedores |
+| Sofia Raggi | R5 — Hosts / QA / Operación | R4 — Distribución |
 
----
+> **Dueño único por rol**, según la composición del grupo de la devolución F1.
 
-## 1.1 Correccion del Diagrama
-#### Corrección del diagrama
+## 1.1 Corrección del Diagrama
+
+### Corrección del diagrama
 
 Diagrama analizado: "Enterprise Network Design (Cisco)", el que vimos en clase. Le encontramos 5 defectos. Esta tabla va en la sección 1.1 de la memoria.
 
@@ -28,6 +28,8 @@ Diagrama analizado: "Enterprise Network Design (Cisco)", el que vimos en clase. 
 | 3 | Entre C1 y C2 (los dos Nexus del core) no hay enlace. | Agregamos el enlace CORE-1 ↔ CORE-2 y corre OSPF área 0 sobre él. | Si se corta EDGE ↔ CORE-1, CORE-1 se queda sin camino directo hacia arriba y el tráfico tiene que bajar a distribución para volver a subir por CORE-2. Con el enlace core-core pasa directo al otro core y OSPF tiene una ruta alternativa corta. |
 | 4 | HSRP en el core (VLAN 10, 20 y 30 en los Nexus 9300). Es un diseño "collapsed": el core hace también de gateway de los usuarios. | El gateway pasa a distribución con VRRP entre DIST-1 y DIST-2. El core queda solo para rutear (tránsito puro). | El core tiene que hacer una sola cosa y hacerla rápido. Si además es gateway, un problema de una LAN (ARP, broadcast, cambio de master) termina afectando al equipo del que depende toda la red. En distribución el problema queda en esa capa. Usamos VRRP y no HSRP porque VRRP es estándar (RFC 5798) y HSRP es de Cisco (RFC 2281); en MikroTik no existe HSRP. |
 | 5 | El iBGP con route reflector está mal ubicado: la sesión aparece entre las interfaces outside del ASA, atravesando el firewall. | Sin iBGP y sin route reflector. BGP corre solo en EDGE (AS 65000), como eBGP hacia ISP-1 (AS 65001) e ISP-2 (AS 65002). Adentro se usa OSPF. | Un route reflector sirve cuando hay muchos routers iBGP en el mismo AS y no querés hacer full-mesh. Acá hay un solo router de borde, no hay nada que reflejar. Además, si el RR existiera tendría que estar en los routers de borde, no del otro lado del firewall. BGP queda para hablar con los proveedores y OSPF para adentro. |
+
+---
 
 ### Otras cosas que vimos
 
@@ -102,7 +104,7 @@ En total son 11 nodos (7 routers, 2 switches y 2 hosts) y 15 enlaces, lo mismo q
 | C1 y C2 sin enlace entre sí | Enlace CORE-1 ↔ CORE-2 |
 | HSRP en el core | VRRP en DIST-1 / DIST-2, el core solo rutea |
 | iBGP con route reflector a través del ASA | eBGP solo en EDGE, sin RR, OSPF adentro |
----
+
 ## 1.2 IPAM / direccionamiento
 
 ### 1.2.1 Criterios definidos
@@ -429,9 +431,12 @@ Las tres últimas son la **prueba obligatoria de clave incorrecta** del Epic F4 
   - **Cuándo:** se tomará un backup inicial (Snapshot BASE) de todos los equipos en la Fase 1. Posteriormente, se realizarán backups al finalizar cada hito o antes de aplicar un cambio crítico.
   - **Qué y Cómo:** para cada router MikroTik CHR, se extraerá la configuración ejecutando los comandos `/export` (para tener la configuración legible) y `/system backup save` (para el binario completo).
   - **Dónde:** estos archivos serán versionados por fecha y almacenados en el repositorio del grupo dentro de la carpeta `backups/`.
-  - **Restauración:** se documentará evidencia probando el *restore* del archivo `.backup` en un nodo para garantizar que la recuperación sea viable ante incidentes.
+  - **Restauración:** se documentará evidencia probando el *restore* del archivo `.backup` en un nodo para garantizar que la recuperación sea viable ante incidentes. **Estado (16/10): probado con evidencia en la sección 2.5.1** (reset + `/system backup load` del `.backup` de F3 en ISP-1).
 
-## 2. Topologia
+---
+
+## 2. Topología
+
 ### 2.1 Despliegue
 ![TOPOLOGIA](diagramas/TOPOLOGIA.png)
 
@@ -514,15 +519,15 @@ Una vez finalizada la configuración de las direcciones IP de los enlaces punto 
 
 | ID | Dispositivo de origen | Dispositivo de destino | Objetivo de la prueba | Evidencia |
 |---|---|---|---|---|
-| PING-01 | DIST2 | CORE1 - CORE2 - PCSERVER - DIST1 | Verificar conectividad desde DIST2. | [Captura de ping desde DIST2](/goys-failover-grupo08/capturas/F1/pruebaConectividadCORE1-CORE2-PCSERVER-DIST1DesdeDIST2.png) |
-| PING-02 |  DIST1 | CORE1 - CORE2 - PCUSER - DIST2 | Verificar conectividad desde DIST1. | [Captura de ping desde DIST1](/goys-failover-grupo08/capturas/F1/pruebaConectividadCORE1-CORE2-PCUSER-DIST2DesdeDIST1.png) |
-| PING-03 | PC-USER | DIST1 | Verificar conectividad desde PC-USER. | [Captura de ping desde PC-USER](/goys-failover-grupo08/capturas/F1/pruebaConectividadDIST1DesdePC-USER.png) |
-| PING-04 | PC-SERVER | DIST2 | Verificar conectividad desde PC-SERVER. | [Captura de ping desde PC-SERVER](/goys-failover-grupo08/capturas/F1/pruebaConectividadDIST2DesdePC-SERVER.png) |
-| PING-05 | CORE2 | EDGE - CORE1 - DIST1 - DIST2 | Verificar conectividad desde CORE2. | [Captura de ping desde CORE2](/goys-failover-grupo08/capturas/F1/pruebaConectividadEDGE-CORE1-DIST1-DIST2DesdeCORE2.png) |
-| PING-06 | CORE1 | EDGE - CORE2 - DIST1 - DIST2 | Verificar conectividad desde CORE1. | [Captura de ping desde CORE1](/goys-failover-grupo08/capturas/F1/pruebaConectividadEDGE-CORE2-DIST1-DIST2DesdeCORE1.png) |
-| PING-07 | ISP-1 | EDGE | Verificar conectividad desde ISP-1. | [Captura de ping desde ISP-1](/goys-failover-grupo08/capturas/F1/pruebaConectividadEDGEDesdeISP-1.png) |
-| PING-08 | ISP-2 | EDGE | Verificar conectividad desde ISP-2. | [Captura de ping desde ISP-2](/goys-failover-grupo08/capturas/F1/pruebaConectividadEDGEDesdeISP-2.png) |
-| PING-09 | EDGE | ISP1 - ISP2 - CORE1 - CORE2 | Verificar conectividad desde EDGE. | [Captura de ping desde EDGE](/goys-failover-grupo08/capturas/F1/pruebaConectividadISP1-ISP2-CORE1-CORE2DesdeEDGE.png) |
+| PING-01 | DIST2 | CORE1 - CORE2 - PCSERVER - DIST1 | Verificar conectividad desde DIST2. | [Captura de ping desde DIST2](../capturas/F1/pruebaConectividadCORE1-CORE2-PCSERVER-DIST1DesdeDIST2.png) |
+| PING-02 |  DIST1 | CORE1 - CORE2 - PCUSER - DIST2 | Verificar conectividad desde DIST1. | [Captura de ping desde DIST1](../capturas/F1/pruebaConectividadCORE1-CORE2-PCUSER-DIST2DesdeDIST1.png) |
+| PING-03 | PC-USER | DIST1 | Verificar conectividad desde PC-USER. | [Captura de ping desde PC-USER](../capturas/F1/pruebaConectividadDIST1DesdePC-USER.png) |
+| PING-04 | PC-SERVER | DIST2 | Verificar conectividad desde PC-SERVER. | [Captura de ping desde PC-SERVER](../capturas/F1/pruebaConectividadDIST2DesdePC-SERVER.png) |
+| PING-05 | CORE2 | EDGE - CORE1 - DIST1 - DIST2 | Verificar conectividad desde CORE2. | [Captura de ping desde CORE2](../capturas/F1/pruebaConectividadEDGE-CORE1-DIST1-DIST2DesdeCORE2.png) |
+| PING-06 | CORE1 | EDGE - CORE2 - DIST1 - DIST2 | Verificar conectividad desde CORE1. | [Captura de ping desde CORE1](../capturas/F1/pruebaConectividadEDGE-CORE2-DIST1-DIST2DesdeCORE1.png) |
+| PING-07 | ISP-1 | EDGE | Verificar conectividad desde ISP-1. | [Captura de ping desde ISP-1](../capturas/F1/pruebaConectividadEDGEDesdeISP-1.png) |
+| PING-08 | ISP-2 | EDGE | Verificar conectividad desde ISP-2. | [Captura de ping desde ISP-2](../capturas/F1/pruebaConectividadEDGEDesdeISP-2.png) |
+| PING-09 | EDGE | ISP1 - ISP2 - CORE1 - CORE2 | Verificar conectividad desde EDGE. | [Captura de ping desde EDGE](../capturas/F1/pruebaConectividadISP1-ISP2-CORE1-CORE2DesdeEDGE.png) |
 
 ### 2.3 Hardening
 
@@ -571,18 +576,65 @@ Se tomó el Snapshot BASE de los 7 routers (ISP-1, ISP-2, EDGE, CORE-1, CORE-2, 
 
 El commit `ops(backup): agrega respaldos rsc, evidencias de conectividad y hardening F1` registra el backup inicial post-F1 junto con sus evidencias.
 
-![Snapshot BASE](../capturas/F1/snapshot_base_f1.png)
-![Export y backup por router](../capturas/F1/exportYBackupPorRouter.png)
+![Snapshot BASE de F1 (SNAPSHOT_BASE_F1) en GNS3](../capturas/F1/snapshot_base_f1.png)
 
+**Evidencia del backup inicial:** `/file print` en cada router muestra el export `<router>-config.rsc` y el respaldo binario `F1_BASE.backup`:
 
-## 3.Configuracion
+| Router | Export y backup (`/file print`) |
+|---|---|
+| ISP-1 | ![Export y backup en ISP-1 (F1)](../capturas/F1/exportYBackupPorRouter.png) |
+| ISP-2 | ![Export y backup en ISP-2 (F1)](../capturas/F1/exportYBackupPorRouter2.png) |
+| EDGE | ![Export y backup en EDGE (F1)](../capturas/F1/exportYBackupPorRouter3.png) |
+| CORE-1 | ![Export y backup en CORE-1 (F1)](../capturas/F1/exportYBackupPorRouter4.png) |
+| CORE-2 | ![Export y backup en CORE-2 (F1)](../capturas/F1/exportYBackupPorRouter5.png) |
+| DIST-1 | ![Export y backup en DIST-1 (F1)](../capturas/F1/exportYBackupPorRouter6.png) |
+| DIST-2 | ![Export y backup en DIST-2 (F1)](../capturas/F1/exportYBackupPorRouter7.png) |
+
+### 2.5 Correcciones y mejoras (16/10)
+
+Dos deudas detectadas en la revisión de F1 se corrigieron el 16/10 y quedan documentadas acá: la **prueba de restore** (promesa de la política de operación, sección 1.4) y la **remoción del `dhcp-client` de fábrica** (observación del docente en la devolución F1).
+
+#### 2.5.1 Prueba de restore (ISP-1)
+
+Se probó el ciclo completo de recuperación en ISP-1 usando el respaldo binario `F3_BASE.backup` (generado con `/system backup save` y password, según la política de la sección 1.3.4):
+
+1. **Reseteo del equipo:** `/system reset-configuration no-defaults=yes` (borra la configuración actual y deja el router en fábrica).
+
+   ![Reseteo de ISP-1 previo al restore](../capturas/correcciones-y-mejoras/reseteoParaProbarBackup.png)
+
+2. **Carga del backup:** `/system backup load name=F3_BASE.backup` con el `<BACKUP_PASS>`; el router restaura la configuración y se reinicia.
+
+   ![Aplicación del backup F3_BASE.backup en ISP-1](../capturas/correcciones-y-mejoras/aplicandoBackup.png)
+
+3. **Verificación pos-restore:** `/ip address print` muestra la configuración de F3 restaurada en ISP-1: `10.255.0.2/30` en `ether9` (enlace a EDGE) y la loopback `1.1.1.1/32`, junto con las interfaces del equipo.
+
+   ![Verificación de la configuración restaurada en ISP-1](../capturas/correcciones-y-mejoras/backupVerificado.png)
+
+**Resultado:** el restore es viable: el `.backup` binario **sí incluye las claves** (a diferencia del `/export`), por lo que con `/system backup load` se recupera el equipo completo sin recargar claves a mano.
+
+#### 2.5.2 Remoción del `dhcp-client` de fábrica
+
+El `dhcp-client` de fábrica de RouterOS (que en los exports aparecía como `/ip dhcp-client` + `add interface=*2`, con la interfaz "not active") fue removido en los 7 routers:
+
+```routeros
+/ip dhcp-client remove [find]
+```
+
+![Eliminación del dhcp-client en ISP-1](../capturas/correcciones-y-mejoras/eliminarClienteDHCP.png)
+
+Los exports versionados de las generaciones `2026-10-11_F2_BASE/` y `2026-10-11_F3_BASE/` quedaron saneados sin esa sección, y la verificación por grep sobre esos 14 `.rsc` ya no encuentra coincidencias de `dhcp-client`. El snapshot histórico `2026-10-08_F1_BASE/` **se conserva sin tocar** como evidencia del estado real de F1 en su momento (el `dhcp-client` de fábrica figura ahí a propósito: es el registro de la fase, no la configuración vigente).
+
+---
+
+## 3. Configuración
+
 ### 3.1 Desarrollo de VRRP
 
 El objetivo de esta parte corresponde a implementar un mecanismo de redundancia de capa 3 mediante Virtual Router Redundancy Protocol (VRRP) en los routers DIST-1 y DIST-2. 
 
-Esta configuracion nos permite proporcionar gateways virtuales para las redes de usuarios y servidores, manteniendo asi la disponibilidad del servicio ante la pérdida del router, el cual desempeña el rol principal.
+Esta configuración nos permite proporcionar gateways virtuales para las redes de usuarios y servidores, manteniendo asi la disponibilidad del servicio ante la pérdida del router, el cual desempeña el rol principal.
 
-Adicionalmente, tambien se busco distribuir el rol de Master entre ambos routers para asi implementar un esquema de load-sharing, evitando que un único dispositivo asumiera permanentemente la responsabilidad principal sobre ambas redes.
+Adicionalmente, tambien se buscó distribuir el rol de Master entre ambos routers para asi implementar un esquema de load-sharing, evitando que un único dispositivo asumiera permanentemente la responsabilidad principal sobre ambas redes.
 
 #### 3.1.1 Configuracion de los grupos VRRP
 
@@ -616,7 +668,8 @@ En donde se espera que DIST-1 se encuentre en estado Master para VRID 10 y Backu
 
 ![Configuración en DIST-2](../capturas/F2/configVRRP-DIST2.png)
 
-#### 3.1.3 Resultado de la implementacion 
+#### 3.1.3 Resultado de la implementación
+
 Con la configuración de VRRP se establecen dos gateways virtuales redundantes para las LAN de usuarios y servidores. La distribución de los roles Master entre DIST-1 y DIST-2 nos permite implementar el esquema de load-sharing definido para la fase, mientras que la presencia de un router Backup en cada grupo tambien nos proporciona la capacidad de asumir el gateway ante una falla del Master.
 
 Gracias a esta implementación se establece la base de redundancia de capa 3 requerida para continuar con las verificaciones de conectividad y con la integración del enrutamiento dinámico mediante OSPF, correspondiente a las siguientes actividades de la Fase 2.
@@ -754,7 +807,10 @@ El TTL de 63 corresponde a un salto de router desde el valor inicial de 64, ya q
 
 El criterio de aceptación se cumple: los dos hosts alcanzan su gateway virtual y existe conectividad entre las LAN de usuarios y servidores. Con esto queda comprobado el funcionamiento conjunto de VRRP y OSPF definido para la Fase 2.
 
+---
+
 ## 4. Implementacion de BGP + firewall
+
 ### 4.1 eBGP Multi-homing
 El objetivo de esta etapa corresponde a implementar conectividad mediante el protocolo eBGP entre el router EDGE y los dos proveedores de servicios de internet, ISP-1 e ISP-2
 
@@ -770,9 +826,7 @@ Ademas, tambien se configuro la autenticacion TCP-MD5 para proteger el estableci
 #### 4.1.2 Configuración de eBGP en ISP-1 e ISP-2
 Seguido de esto, en los routers ISP-1 e ISP-2 se configuraron las conexiones BGP hacia EDGE, utilizando los parámetros de vecindad correspondientes y las mismas claves TCP-MD5 definidas en el extremo remoto para cada enlace.
 
-![Aplicacion de clave TCP-MD5 Foto1](../capturas/F3/wrongPasswordTCP-MD5.png)
-![Aplicacion de clave TCP-MD5 Foto2](../capturas/F3/wrongPasswordTCP-MD5-2.png)
-![Aplicacion de clave TCP-MD5 Foto3](../capturas/F3/wrongPasswordTCP-MD5-3.png)
+La prueba de clave incorrecta de TCP-MD5 (procedimiento y resultado) está documentada en la **sección 5.1**.
 
 Ademas, tambien se configuro la opcion de anuncio de la ruta por defecto según los requisitos de la práctica, con el propósito de permitir que EDGE pudiera recibir una ruta por defecto desde los proveedores. La disponibilidad efectiva de esta ruta depende de la configuración aplicada y de la política de anuncios de cada ISP.
 
@@ -780,7 +834,7 @@ Ademas, tambien se configuro la opcion de anuncio de la ruta por defecto según 
 *Configuracion de eBGP en ISP-1*
 
 ![Configuracion de eBGP en ISP-2](../capturas/F3/configuracionBGP-ISP2.png)
-*Configuracion de eBGP en ISP-1*
+*Configuracion de eBGP en ISP-2*
 
 #### 4.1.3 Verificación de las sesiones BGP
 Una vez finalizada la configuración, se verificó el estado de las sesiones BGP en EDGE.
@@ -798,8 +852,6 @@ Con esta configuración se nos permite utilizar la información de enrutamiento 
 Cabe aclarar, que para evitar la publicación indiscriminada de rutas, se incorporaron filtros que delimitan los prefijos autorizados para su anuncio, ya que los filtros permiten determinar que redes internas se exponen al exterior y reducen el riesgo de anunciar rutas que no corresponden a la politica de enrutamiento.
 
 ![Filtros de EDGE](../capturas/F3/cadenaDeFiltros.png)
-
-![Verificación en EDGE](../capturas/F3/estadoFinalEDGE_A.png)
 
 #### 4.2.1 Verificación de las LAN anunciadas en ISP-1 y ISP-2
 
@@ -819,52 +871,8 @@ La verificación de las tablas de enrutamiento de ISP-1 e ISP-2 nos permitió ev
 
 De esta manera, la fase complementa la conectividad eBGP establecida en F3.1 y permite integrar el enrutamiento interno OSPF con el intercambio de rutas externo BGP.
 
-## 6. Registro de cambios
+---
 
-### 6.1 Change log
-
-Cada fila registra una intervención sobre los nodos con el formato definido en la sección 1.4: **fecha, rol, nodo, cambio, commit y rollback**. La columna *Commit* indica el commit del repositorio que versiona la configuración resultante (los `.rsc` de `backups/`). Los cambios se aplicaron en GNS3 y su estado queda respaldado en el commit citado.
-
-**Rollback general:** cada fase tiene un backup completo de los 7 routers. Para volver a la fase anterior se restaura el `.rsc` correspondiente (`/system reset-configuration no-defaults=yes skip-backup=yes` y luego `/import file-name=<router>.rsc`), o se revierte al snapshot de GNS3 de esa fase. Se recuerda que `/export` no incluye claves: tras restaurar hay que volver a cargar las claves OSPF, BGP y VRRP (sección 1.3.4). Si el acceso por red se pierde, se opera por la consola de GNS3.
-
-| Fase | Backup de partida (rollback) | Backup resultante |
-|---|---|---|
-| F2 | `backups/2026-10-08_F1_BASE/` | `backups/2026-10-11_F2_BASE/` |
-| F3 | `backups/2026-10-11_F2_BASE/` | `backups/2026-10-11_F3_BASE/` |
-
-#### 6.1.1 Fase 2: VRRP + OSPF
-
-Los `.rsc` de F2 difieren de los de F1 solo en los routers que participan de VRRP y OSPF (EDGE, CORE-1, CORE-2, DIST-1 y DIST-2). ISP-1 e ISP-2 no cambiaron.
-
-| Fecha | Rol | Nodo | Cambio | Commit | Rollback |
-|---|---|---|---|---|---|
-| 2026-10-11 | R4 | DIST-1 | VRRP v2 con auth simple: `vrrp-users` (vrid 10, prioridad 150, master) sobre `vlan10` y `vrrp-servers` (vrid 20, prioridad por defecto, backup) sobre `vlan20`. Gateways virtuales `192.168.10.1` y `192.168.20.1` | `e1f5757` | `/interface vrrp remove [find]` o restaurar `2026-10-08_F1_BASE/dist1.rsc` |
-| 2026-10-11 | R4 | DIST-2 | VRRP v2 con auth simple: `vrrp-servers` (vrid 20, prioridad 150, master) y `vrrp-users` (vrid 10, prioridad por defecto, backup) | `e1f5757` | `/interface vrrp remove [find]` o restaurar `2026-10-08_F1_BASE/dist2.rsc` |
-| 2026-10-11 | R3 | CORE-1 | OSPF área 0: instancia `ospf-instance-1` (router-id `4.4.4.4`), área `backbone-area` e interface-template en `ether9` a `ether12` y `lo`, con MD5 (`auth-id=1`) | `e1f5757` | Quitar el interface-template, el área y la instancia con `/routing ospf ... remove [find]` o restaurar `2026-10-08_F1_BASE/core1.rsc` |
-| 2026-10-11 | R3 | CORE-2 | OSPF área 0 (router-id `5.5.5.5`) en `ether9` a `ether12` y `lo`, con MD5; incluye el enlace core–core | `e1f5757` | Igual que CORE-1; restaurar `2026-10-08_F1_BASE/core2.rsc` |
-| 2026-10-11 | R4 | DIST-1 | OSPF área 0 (router-id `6.6.6.6`) en `ether9`, `ether10`, `vlan10`, `vlan20` y `lo`, con MD5 | `e1f5757` | Igual que CORE-1; restaurar `2026-10-08_F1_BASE/dist1.rsc` |
-| 2026-10-11 | R4 | DIST-2 | OSPF área 0 (router-id `7.7.7.7`) en `ether9`, `ether10`, `vlan10`, `vlan20` y `lo`, con MD5 | `e1f5757` | Igual que CORE-1; restaurar `2026-10-08_F1_BASE/dist2.rsc` |
-| 2026-10-11 | R1 | EDGE | OSPF área 0 (router-id `3.3.3.3`) hacia el core, en `ether11`, `ether12` y `lo`, con MD5 | `e1f5757` | Igual que CORE-1; restaurar `2026-10-08_F1_BASE/edge.rsc` |
-| 2026-10-11 | R5 | Los 7 routers | Backup post-F2: `/export` de cada router versionado en `backups/2026-10-11_F2_BASE/`, con capturas de verificación en `capturas/F2/` | `e1f5757` | No aplica (el backup es la referencia de restauración) |
-| 2026-10-13 | R5 | Documentación | Se documenta VRRP en la memoria (sección 3.1) | `0c4c1ef` | `git revert 0c4c1ef` |
-
-#### 6.1.2 Fase 3: BGP + firewall
-
-Entre F2 y F3 cambiaron EDGE, ISP-1 e ISP-2. CORE-1, CORE-2, DIST-1 y DIST-2 no tuvieron cambios de configuración (sus `.rsc` son iguales a los de F2).
-
-| Fecha | Rol | Nodo | Cambio | Commit | Rollback |
-|---|---|---|---|---|---|
-| 2026-10-11 | R1 | EDGE | eBGP multi-homing: instancia BGP (AS `65000`, router-id `3.3.3.3`), template `ebgp-peers` y conexiones `bgp-isp1` (`10.255.0.2`, AS `65001`) y `bgp-isp2` (`10.255.0.6`, AS `65002`), con TCP-MD5 | `4cc7d15` | `/routing bgp connection remove [find]` o restaurar `2026-10-11_F2_BASE/edge.rsc` |
-| 2026-10-11 | R2 | ISP-1 | eBGP hacia EDGE: instancia BGP (AS `65001`, router-id `1.1.1.1`), template `ebgp-edge` y conexión `bgp-edge` (`10.255.0.1`, AS `65000`) con TCP-MD5 y `output.redistribute=connected` | `4cc7d15` | `/routing bgp connection remove [find]` o restaurar `2026-10-11_F2_BASE/isp1.rsc` |
-| 2026-10-11 | R2 | ISP-2 | eBGP hacia EDGE: instancia BGP (AS `65002`, router-id `2.2.2.2`) y conexión `bgp-edge` con TCP-MD5 y `output.redistribute=connected` | `4cc7d15` | `/routing bgp connection remove [find]` o restaurar `2026-10-11_F2_BASE/isp2.rsc` |
-| 2026-10-11 | R1 | EDGE | Redistribución OSPF a BGP con filtro: `redistribute=ospf` y cadena de salida `bgp-out-filter`, que solo acepta prefijos dentro de `192.168.0.0/16` | `4cc7d15` | `/routing filter rule remove [find chain=bgp-out-filter]` y quitar `redistribute` de las conexiones, o restaurar `2026-10-11_F2_BASE/edge.rsc` |
-| 2026-10-11 | R1 | EDGE | Salida a "Internet": la instancia OSPF pasa a `originate-default=always` para anunciar la ruta por defecto al dominio | `4cc7d15` | `/routing ospf instance set [find] originate-default=never` |
-| 2026-10-11 | R1 | EDGE | Firewall: lista de interfaces `WAN` (`ether9`, `ether10`), reglas de `input` y `forward` (`established,related`, OSPF, ICMP, descarte desde WAN, descarte de inválidos), acceso SSH/Winbox solo desde interfaces fuera de `WAN` y NAT `masquerade` hacia ambos ISP | `4cc7d15` | `/ip firewall filter remove [find]` y `/ip firewall nat remove [find]`; hacerlo por consola de GNS3 si se pierde el acceso |
-| 2026-10-14 | R5 | Los 7 routers | Backup post-F3: `/export` de cada router versionado en `backups/2026-10-11_F3_BASE/`, con capturas de verificación en `capturas/F3/` | `4cc7d15` | No aplica (el backup es la referencia de restauración) |
-
-**Nota sobre las fechas:** los `.rsc` de F2 y F3 llevan fecha de exportación del 11/10 (el nombre de la carpeta de F3 también). El commit de F2 es del 11/10 y el de F3 del 14/10, por lo que las filas de F3 usan la fecha del export para el cambio y la del commit para el backup.
-
-**Pendiente de registrar:** los cambios de F1 (despliegue, direccionamiento, hardening y backup inicial) no figuran todavía en este change log.
 ### 4.3 Salida a "Internet"
 
 El objetivo de esta etapa es comprobar que los hosts de la red interna alcanzan el "Internet" simulado por el laboratorio, representado por las loopbacks de los proveedores (`1.1.1.1` en ISP-1 y `2.2.2.2` en ISP-2), y que la información de salida se propaga correctamente por el dominio OSPF.
@@ -880,13 +888,19 @@ Se verificó la propagación en el resto de los routers con `/ip route print`:
 | Router | Ruta `0.0.0.0/0` | Gateway | Distancia |
 |---|---|---|---|
 | CORE-1 | Aprendida por OSPF | `10.255.0.9` (EDGE, `ether9`) | `110` |
+| CORE-2 | Aprendida por OSPF | `10.255.0.13` (EDGE, `ether9`) | `110` |
 | DIST-1 | Aprendida por OSPF, 2 caminos (ECMP) | `10.255.0.21` (CORE-1, `ether9`) y `10.255.0.29` (CORE-2, `ether10`) | `110` |
+| DIST-2 | Aprendida por OSPF, 2 caminos (ECMP) | `10.255.0.25` (CORE-1, `ether9`) y `10.255.0.33` (CORE-2, `ether10`) | `110` |
 
 CORE-1 llega a la salida directamente por EDGE, y DIST-1 reparte el tráfico entre ambos routers de core. Con esto la ruta por defecto queda disponible hasta la capa de distribución, y los hosts la alcanzan a través del gateway virtual VRRP.
 
 ![Tabla de ruteo de CORE-1](../capturas/F3/estadoFinalCORE1.png)
 
 ![Tabla de ruteo de DIST-1](../capturas/F3/estadoFinalDIST1.png)
+
+![Adyacencias OSPF (todas en estado Full) y tabla de ruteo de CORE-2](../capturas/F3/estadoFinalCORE2.png)
+
+![Estado VRRP (master/backup) y tabla de ruteo de DIST-2](../capturas/F3/estadoFinalDIST2.png)
 
 **Observación sobre la ruta recibida de los ISP:** en la tabla de ruteo de EDGE no figura una ruta `0.0.0.0/0` aprendida por BGP. Las sesiones con ISP-1 e ISP-2 están en estado `Established` y cada una intercambia 2 prefijos (la loopback del proveedor y el enlace), pero ninguno es una ruta por defecto. En EDGE, las rutas hacia los ISP son específicas: `1.1.1.1/32` vía `10.255.0.2` y `2.2.2.2/32` vía `10.255.0.6`, ambas con distancia `20` (eBGP). La default que ven los routers internos es, entonces, la que origina el propio EDGE en OSPF y no una recibida de los proveedores.
 
@@ -912,7 +926,6 @@ El camino de ida usa la default de OSPF hasta EDGE, y desde EDGE las rutas espec
 El criterio de aceptación se cumple: un host de la red interna alcanza la loopback de ISP-1 y la de ISP-2. EDGE origina la ruta por defecto hacia el dominio OSPF y esta llega a CORE-1, CORE-2 y a la capa de distribución.
 
 Queda como punto a tener en cuenta para la revisión que la salida funciona porque EDGE tiene rutas específicas hacia las loopbacks de los ISP y origina la default con `always`. La default no depende de que los ISP la anuncien por BGP, de modo que el alcance a destinos que no sean esas loopbacks no está probado en este laboratorio.
-
 
 ### 4.4 Firewall edge
 
@@ -967,6 +980,7 @@ Para comprobar el funcionamiento del firewall se verifico que las reglas esten c
 | Adyacencias OSPF de EDGE | `input` regla 2 (`protocol=ospf`) | Adyacencias con CORE-1 y CORE-2 operativas | Sección 3.2.3 |
 
 ![Reglas del firewall y NAT activas en EDGE](../capturas/F3/estadoFinalEDGE_C.png)
+
 *Estado final de `/ip firewall filter` y `/ip firewall nat` en EDGE*
 
 Con esto se comprueba que el filtro esta activo y no interrumpe el trafico necesario para la red.
@@ -980,3 +994,129 @@ Observación para la revisión: la configuracion se tomo del respaldo `backups/2
 - La cadena `input` no termina con una regla de drop general. El bloqueo aplica a lo que llega por las interfaces WAN, y lo que llega desde la red interna y no coincide con ninguna regla es aceptado por defecto. Por eso la regla 6 (SSH/Winbox) no restringe por si sola el acceso interno.
 - En el respaldo, la regla `established,related` de la cadena `forward` aparece dos veces. No afecta el funcionamiento, pero se podria dejar una sola.
 - No hay una regla explicita para BGP (TCP 179). Las sesiones con los ISP funcionan porque el trafico de respuesta entra como `established`, pero se podria agregar una regla de accept para BGP desde las IP de los vecinos si se quiere dejarlo explicito.
+
+---
+
+## 5. Verificación de seguridad (claves incorrectas)
+
+La consigna exige comprobar que una adyacencia o sesión con clave incorrecta **falla**, y documentarlo (feature "Verificación de seguridad" del Epic F4). La prueba de BGP se adelantó a F3, junto con la configuración de TCP-MD5; OSPF y VRRP quedan pendientes para F4.
+
+| Control | Rol | Estado | Evidencia |
+|---|---|---|---|
+| BGP con clave TCP-MD5 incorrecta → la sesión **no** llega a `established` | R1/R2 | ✅ verificado en F3 | Sección 5.1 |
+| OSPF con clave MD5 incorrecta → la adyacencia **no** llega a FULL | R3 | ⏳ pendiente F4 | — |
+| VRRP con auth incorrecta → ambos routers pasan a master | R4 | ⏳ pendiente F4 | — |
+
+### 5.1 BGP con clave TCP-MD5 incorrecta (F3)
+
+Con ambas sesiones en estado `Established`, se cargó en ISP-1 una clave distinta a la compartida con EDGE (el extremo de la sesión `bgp-isp1-1`):
+
+1. **Clave incorrecta cargada en ISP-1:** `/routing bgp connection set [find name=bgp-edge] tcp-md5-key=PSWRONG`.
+
+   ![Carga de clave TCP-MD5 incorrecta en ISP-1](../capturas/F3/wrongPasswordTCP-MD5.png)
+
+2. **Resultado en EDGE:** con `/routing/bgp/session/print`, la sesión `bgp-isp1-1` aparece **sin** el flag `E` (no `established`), con `last-stopped=2026-10-11 14:02:21` y `prefix-count=0`, mientras que `bgp-isp2-1` sigue `established`. Con clave incorrecta la sesión **no** se establece.
+
+   ![Sesión con ISP-1 caída por clave incorrecta; ISP-2 sigue established](../capturas/F3/wrongPasswordTCP-MD5-2.png)
+
+3. **Restauración de la clave correcta:** al volver a cargar la clave compartida, la sesión con ISP-1 volvió a `established` (`uptime=14s770ms`, `last-started=2026-10-11 14:03:30`), con lo que se confirma que la caída se debió exclusivamente a la clave.
+
+   ![Sesión BGP con ISP-1 restablecida tras corregir la clave](../capturas/F3/wrongPasswordTCP-MD5-3.png)
+
+**Resultado:** el criterio "sesión con clave incorrecta FALLA" queda cumplido para BGP: TCP-MD5 valida la clave durante el handshake y una clave incorrecta impide que la sesión llegue a `established`. Las pruebas de OSPF MD5 y VRRP auth se ejecutan en F4 (runbook correspondiente) y se documentan en esta sección.
+
+---
+
+## 6. Registro de cambios
+
+### 6.1 Change log
+
+Cada fila registra una intervención sobre los nodos con el formato definido en la sección 1.4: **fecha, rol, nodo, cambio, commit y rollback**. La columna *Commit* indica el commit del repositorio que versiona la configuración resultante (los `.rsc` de `backups/`). Los cambios se aplicaron en GNS3 y su estado queda respaldado en el commit citado.
+
+**Rollback general:** cada fase tiene un backup completo de los 7 routers. Para volver a la fase anterior se restaura el `.rsc` correspondiente (`/system reset-configuration no-defaults=yes skip-backup=yes` y luego `/import file-name=<router>.rsc`), o se revierte al snapshot de GNS3 de esa fase. Se recuerda que `/export` no incluye claves: tras restaurar hay que volver a cargar las claves OSPF, BGP y VRRP (sección 1.3.4). Si el acceso por red se pierde, se opera por la consola de GNS3.
+
+| Fase | Backup de partida (rollback) | Backup resultante |
+|---|---|---|
+| F1 | Proyecto GNS3 `topologia_failover_routing` recién importado (snapshot BASE de los nodos) | `backups/2026-10-08_F1_BASE/` |
+| F2 | `backups/2026-10-08_F1_BASE/` | `backups/2026-10-11_F2_BASE/` |
+| F3 | `backups/2026-10-11_F2_BASE/` | `backups/2026-10-11_F3_BASE/` |
+
+#### 6.1.1 Fase 1: Topología + hardening + backup
+
+Los `.rsc` de F1_BASE registran el estado de los 7 routers después del despliegue, el direccionamiento y el hardening, y previo a VRRP/OSPF/BGP. Las verificaciones de conectividad (PING-01 a PING-09) y el snapshot BASE quedan en `capturas/F1/`.
+
+| Fecha | Rol | Nodo | Cambio | Commit | Rollback |
+|---|---|---|---|---|---|
+| 2026-10-08 | R5 | Los 11 nodos | Despliegue: 7 CHR + 2 switches + 2 hosts levantados y cableados según el diagrama (15 enlaces), y snapshot BASE de todos los nodos (`capturas/F1/snapshot_base_f1.png`) | `6b200fb` | Restaurar el snapshot BASE o reimportar el proyecto GNS3 `topologia_failover_routing` |
+| 2026-10-08 | R1/R2 | EDGE, ISP-1, ISP-2 | IPs de enlace WAN e internas (enlaces `/30` del plan `10.255.0.0/24`) y loopbacks `1.1.1.1`, `2.2.2.2` y `3.3.3.3` | `6b200fb` | Restaurar el snapshot BASE |
+| 2026-10-08 | R3 | CORE-1, CORE-2 | IPs de enlace hacia EDGE, core–core y distribución, y loopbacks `4.4.4.4` y `5.5.5.5` | `6b200fb` | Restaurar el snapshot BASE |
+| 2026-10-08 | R4 | DIST-1, DIST-2 | IPs de enlace, LANs `192.168.10.0/24` y `192.168.20.0/24` y loopbacks `6.6.6.6` y `7.7.7.7` | `6b200fb` | Restaurar el snapshot BASE |
+| 2026-10-08 | R1–R4 | Los 7 routers | Hardening: `ftp`, `telnet`, `www`, `www-ssl`, `api` y `api-ssl` deshabilitados; solo `ssh` y `winbox` habilitados; grupo `monitor` de solo lectura; `strong-crypto`, neighbor discovery y MAC server acotados (`capturas/F1/hardeningSeguridad.png`) | `6b200fb` | Restaurar el snapshot BASE |
+| 2026-10-10 | R5 | Todos | Verificación de conectividad entre vecinos directos (PING-01 a PING-09) con capturas en `capturas/F1/` | `7a17126` | No aplica (verificación) |
+| 2026-10-08 | R5 | Los 7 routers | Backup inicial: `/export` de cada router versionado en `backups/2026-10-08_F1_BASE/`, con evidencia de export por router | `6b200fb` | No aplica (el backup es la referencia de restauración) |
+
+#### 6.1.2 Fase 2: VRRP + OSPF
+
+Los `.rsc` de F2 difieren de los de F1 solo en los routers que participan de VRRP y OSPF (EDGE, CORE-1, CORE-2, DIST-1 y DIST-2). ISP-1 e ISP-2 no cambiaron.
+
+| Fecha | Rol | Nodo | Cambio | Commit | Rollback |
+|---|---|---|---|---|---|
+| 2026-10-11 | R4 | DIST-1 | VRRP v2 con auth simple: `vrrp-users` (vrid 10, prioridad 150, master) sobre `vlan10` y `vrrp-servers` (vrid 20, prioridad por defecto, backup) sobre `vlan20`. Gateways virtuales `192.168.10.1` y `192.168.20.1` | `e1f5757` | `/interface vrrp remove [find]` o restaurar `2026-10-08_F1_BASE/dist1.rsc` |
+| 2026-10-11 | R4 | DIST-2 | VRRP v2 con auth simple: `vrrp-servers` (vrid 20, prioridad 150, master) y `vrrp-users` (vrid 10, prioridad por defecto, backup) | `e1f5757` | `/interface vrrp remove [find]` o restaurar `2026-10-08_F1_BASE/dist2.rsc` |
+| 2026-10-11 | R3 | CORE-1 | OSPF área 0: instancia `ospf-instance-1` (router-id `4.4.4.4`), área `backbone-area` e interface-template en `ether9` a `ether12` y `lo`, con MD5 (`auth-id=1`) | `e1f5757` | Quitar el interface-template, el área y la instancia con `/routing ospf ... remove [find]` o restaurar `2026-10-08_F1_BASE/core1.rsc` |
+| 2026-10-11 | R3 | CORE-2 | OSPF área 0 (router-id `5.5.5.5`) en `ether9` a `ether12` y `lo`, con MD5; incluye el enlace core–core | `e1f5757` | Igual que CORE-1; restaurar `2026-10-08_F1_BASE/core2.rsc` |
+| 2026-10-11 | R4 | DIST-1 | OSPF área 0 (router-id `6.6.6.6`) en `ether9`, `ether10`, `vlan10`, `vlan20` y `lo`, con MD5 | `e1f5757` | Igual que CORE-1; restaurar `2026-10-08_F1_BASE/dist1.rsc` |
+| 2026-10-11 | R4 | DIST-2 | OSPF área 0 (router-id `7.7.7.7`) en `ether9`, `ether10`, `vlan10`, `vlan20` y `lo`, con MD5 | `e1f5757` | Igual que CORE-1; restaurar `2026-10-08_F1_BASE/dist2.rsc` |
+| 2026-10-11 | R1 | EDGE | OSPF área 0 (router-id `3.3.3.3`) hacia el core, en `ether11`, `ether12` y `lo`, con MD5 | `e1f5757` | Igual que CORE-1; restaurar `2026-10-08_F1_BASE/edge.rsc` |
+| 2026-10-11 | R5 | Los 7 routers | Backup post-F2: `/export` de cada router versionado en `backups/2026-10-11_F2_BASE/`, con snapshot BASE y capturas de verificación en `capturas/F2/` (`snapshot_base_f2.png`) | `e1f5757` | No aplica (el backup es la referencia de restauración) |
+| 2026-10-13 | R5 | Documentación | Se documenta VRRP en la memoria (sección 3.1) | `0c4c1ef` | `git revert 0c4c1ef` |
+
+**Evidencia del backup post-F2:** `/file print` en cada router muestra el export `<router>-config.rsc` y los respaldos binarios `F1_BASE.backup` y `F2_BASE.backup`:
+
+| Router | Export y backup (`/file print`) |
+|---|---|
+| ISP-1 | ![Export y backup en ISP-1 (F2)](../capturas/F2/exportYBackupPorRouter.png) |
+| ISP-2 | ![Export y backup en ISP-2 (F2)](../capturas/F2/exportYBackupPorRouter2.png) |
+| EDGE | ![Export y backup en EDGE (F2)](../capturas/F2/exportYBackupPorRouter3.png) |
+| CORE-1 | ![Export y backup en CORE-1 (F2)](../capturas/F2/exportYBackupPorRouter4.png) |
+| CORE-2 | ![Export y backup en CORE-2 (F2)](../capturas/F2/exportYBackupPorRouter5.png) |
+| DIST-1 | ![Export y backup en DIST-1 (F2)](../capturas/F2/exportYBackupPorRouter6.png) |
+| DIST-2 | ![Export y backup en DIST-2 (F2)](../capturas/F2/exportYBackupPorRouter7.png) |
+
+![Snapshot BASE de F2 (SNAPSHOT_BASE_F2) en GNS3](../capturas/F2/snapshot_base_f2.png)
+
+#### 6.1.3 Fase 3: BGP + firewall
+
+Entre F2 y F3 cambiaron EDGE, ISP-1 e ISP-2. CORE-1, CORE-2, DIST-1 y DIST-2 no tuvieron cambios de configuración (sus `.rsc` son iguales a los de F2).
+
+| Fecha | Rol | Nodo | Cambio | Commit | Rollback |
+|---|---|---|---|---|---|
+| 2026-10-11 | R1 | EDGE | eBGP multi-homing: instancia BGP (AS `65000`, router-id `3.3.3.3`), template `ebgp-peers` y conexiones `bgp-isp1` (`10.255.0.2`, AS `65001`) y `bgp-isp2` (`10.255.0.6`, AS `65002`), con TCP-MD5 | `4cc7d15` | `/routing bgp connection remove [find]` o restaurar `2026-10-11_F2_BASE/edge.rsc` |
+| 2026-10-11 | R2 | ISP-1 | eBGP hacia EDGE: instancia BGP (AS `65001`, router-id `1.1.1.1`), template `ebgp-edge` y conexión `bgp-edge` (`10.255.0.1`, AS `65000`) con TCP-MD5 y `output.redistribute=connected` | `4cc7d15` | `/routing bgp connection remove [find]` o restaurar `2026-10-11_F2_BASE/isp1.rsc` |
+| 2026-10-11 | R2 | ISP-2 | eBGP hacia EDGE: instancia BGP (AS `65002`, router-id `2.2.2.2`) y conexión `bgp-edge` con TCP-MD5 y `output.redistribute=connected` | `4cc7d15` | `/routing bgp connection remove [find]` o restaurar `2026-10-11_F2_BASE/isp2.rsc` |
+| 2026-10-11 | R1 | EDGE | Redistribución OSPF a BGP con filtro: `redistribute=ospf` y cadena de salida `bgp-out-filter`, que solo acepta prefijos dentro de `192.168.0.0/16` | `4cc7d15` | `/routing filter rule remove [find chain=bgp-out-filter]` y quitar `redistribute` de las conexiones, o restaurar `2026-10-11_F2_BASE/edge.rsc` |
+| 2026-10-11 | R1 | EDGE | Salida a "Internet": la instancia OSPF pasa a `originate-default=always` para anunciar la ruta por defecto al dominio | `4cc7d15` | `/routing ospf instance set [find] originate-default=never` |
+| 2026-10-11 | R1 | EDGE | Firewall: lista de interfaces `WAN` (`ether9`, `ether10`), reglas de `input` y `forward` (`established,related`, OSPF, ICMP, descarte desde WAN, descarte de inválidos), acceso SSH/Winbox solo desde interfaces fuera de `WAN` y NAT `masquerade` hacia ambos ISP | `4cc7d15` | `/ip firewall filter remove [find]` y `/ip firewall nat remove [find]`; hacerlo por consola de GNS3 si se pierde el acceso |
+| 2026-10-11 | R2 | ISP-1 | Prueba de clave TCP-MD5 incorrecta: se cargó `tcp-md5-key=PSWRONG` en ISP-1 y la sesión con EDGE no llegó a `established`; restaurada la clave correcta, se reestableció (sección 5.1) | `4cc7d15` | Volver a cargar la clave compartida en ISP-1 |
+| 2026-10-14 | R5 | Los 7 routers | Backup post-F3: `/export` de cada router versionado en `backups/2026-10-11_F3_BASE/`, con snapshot BASE y capturas de verificación en `capturas/F3/` (`snapshot_base_f3.png`) | `4cc7d15` | No aplica (el backup es la referencia de restauración) |
+
+**Evidencia del backup post-F3:** `/file print` en cada router muestra el export `<router>-config.rsc` y los respaldos binarios de las tres generaciones (`F1_BASE.backup`, `F2_BASE.backup` y `F3_BASE.backup`). Los 7 `.backup` de F3 están generados en los routers — incluido el `F3_BASE.backup` usado en el restore de la sección 2.5.1:
+
+| Router | Export y backups (`/file print`) |
+|---|---|
+| ISP-1 | ![Export y backups en ISP-1 (F3)](../capturas/F3/exportYBackupPorRouter.png) |
+| ISP-2 | ![Export y backups en ISP-2 (F3)](../capturas/F3/exportYBackupPorRouter2.png) |
+| EDGE | ![Export y backups en EDGE (F3)](../capturas/F3/exportYBackupPorRouter3.png) |
+| CORE-1 | ![Export y backups en CORE-1 (F3)](../capturas/F3/exportYBackupPorRouter4.png) |
+| CORE-2 | ![Export y backups en CORE-2 (F3)](../capturas/F3/exportYBackupPorRouter5.png) |
+| DIST-1 | ![Export y backups en DIST-1 (F3)](../capturas/F3/exportYBackupPorRouter6.png) |
+| DIST-2 | ![Export y backups en DIST-2 (F3)](../capturas/F3/exportYBackupPorRouter7.png) |
+
+![Snapshot BASE de F3 (SNAPSHOT_BASE_F3) en GNS3](../capturas/F3/snapshot_base_f3.png)
+
+#### 6.1.4 Correcciones post-F3 (16/10)
+
+| Fecha | Rol | Nodo | Cambio | Commit | Rollback |
+|---|---|---|---|---|---|
+| 2026-10-16 | R1–R4 | Los 7 routers | Remoción del `dhcp-client` de fábrica (`/ip dhcp-client remove [find]`) y saneado de los exports versionados en `backups/` (sección 2.5.2) | `docs(memoria): documenta correcciones 16/10` (asignar hash al commitear) | No aplica (el cliente estaba inactivo; reagregarlo es `/ip dhcp-client add interface=<iface>`) |
+| 2026-10-16 | R5 | ISP-1 | Prueba de restore: `/system reset-configuration no-defaults=yes` + `/system backup load name=F3_BASE.backup`, con verificación de la configuración restaurada (sección 2.5.1) | `docs(memoria): documenta correcciones 16/10` (asignar hash al commitear) | No aplica (es la prueba del procedimiento de recuperación) |

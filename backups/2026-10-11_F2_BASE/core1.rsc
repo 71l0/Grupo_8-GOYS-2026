@@ -26,9 +26,6 @@ add address=10.255.0.17/30 interface=ether10 network=10.255.0.16
 add address=10.255.0.21/30 interface=ether11 network=10.255.0.20
 add address=10.255.0.25/30 interface=ether12 network=10.255.0.24
 add address=4.4.4.4 interface=lo network=4.4.4.4
-/ip dhcp-client
-# Interface not active
-add interface=*2
 /ip service
 set ftp disabled=yes
 set telnet disabled=yes
