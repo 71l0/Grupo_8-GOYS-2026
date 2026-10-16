@@ -867,3 +867,37 @@ El criterio de aceptación se cumple: un host de la red interna alcanza la loopb
 
 Queda como punto a tener en cuenta para la revisión que la salida funciona porque EDGE tiene rutas específicas hacia las loopbacks de los ISP y origina la default con `always`. La default no depende de que los ISP la anuncien por BGP, de modo que el alcance a destinos que no sean esas loopbacks no está probado en este laboratorio.
 
+
+### 4.4 Firewall edge
+
+El objetivo de esta etapa corresponde a proteger el router EDGE, que es el punto de contacto con los proveedores. Para ello se configuro un filtro de entrada en `/ip firewall filter` que acepta el trafico necesario para el funcionamiento de la red y bloquea el trafico no solicitado que llega desde los enlaces WAN (`ether9` hacia ISP-1 y `ether10` hacia ISP-2).
+
+Antes de cargar las reglas se creo la lista de interfaces `WAN` con `ether9` y `ether10`, que se utiliza para identificar el trafico que proviene de los ISP.
+
+#### 4.4.1 Reglas de la cadena input
+
+La cadena `input` filtra el trafico dirigido al propio router EDGE.
+
+| # | Acción | Condición | Función |
+|---|---|---|---|
+| 1 | accept | `connection-state=established,related` | Aceptar conexiones establecidas o relacionadas |
+| 2 | accept | `protocol=ospf` | Permitir OSPF con CORE-1 y CORE-2 |
+| 3 | accept | `protocol=icmp` | Permitir ping/ICMP de gestion |
+| 4 | drop | `in-interface=ether9` | Bloquear trafico no deseado desde ISP-1 |
+| 5 | drop | `in-interface=ether10` | Bloquear trafico no deseado desde ISP-2 |
+| 6 | accept | `protocol=tcp dst-port=22,8291 in-interface-list=!WAN` | Permitir SSH/Winbox desde la red interna |
+
+#### 4.4.2 Reglas de la cadena forward
+
+La cadena `forward` filtra el trafico que atraviesa EDGE entre la red interna y los ISP.
+
+| # | Acción | Condición | Función |
+|---|---|---|---|
+| 1 | accept | `connection-state=established,related` | Aceptar trafico establecido o relacionado |
+| 2 | accept | `src-address=192.168.0.0/16` | Permitir la salida de las LAN hacia "Internet" |
+| 3 | drop | `connection-state=invalid` | Descartar paquetes invalidos |
+| 4 | drop | `in-interface=ether9 connection-nat-state=!dstnat` | Bloquear trafico entrante no solicitado desde ISP-1 |
+| 5 | drop | `in-interface=ether10 connection-nat-state=!dstnat` | Bloquear trafico entrante no solicitado desde ISP-2 |
+
+![Configuracion del firewall en EDGE](../capturas/F3/firewallFilter-EDGE.png)
+*Configuracion del firewall filter y de la lista WAN en EDGE*
