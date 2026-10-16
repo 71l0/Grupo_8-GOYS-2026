@@ -132,8 +132,8 @@ Formato de tarea: `- [ ] descripción (Rol)`
 
 ### Feature: Firewall edge
 *Criterio: filtro de entrada + plano de gestión protegido.*
-- [ ] Reglas de entrada (input/forward) en EDGE, con `established,related` y drop por defecto (R1)
-- [ ] Restringir acceso de gestión (SSH/Winbox) a origen permitido (R1)
+- [ x ] Reglas de entrada (input/forward) en EDGE, con `established,related` y drop por defecto (R1)
+- [ x ] Restringir acceso de gestión (SSH/Winbox) a origen permitido (R1)
 - [ ] Probar reglas y capturar evidencia (R5)
 
 ---
