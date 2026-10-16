@@ -127,8 +127,8 @@ Formato de tarea: `- [ ] descripción (Rol)`
 
 ### Feature: Salida a "Internet"
 *Criterio: host alcanza el loopback del ISP.*
-- [ ] Verificar default route recibida por EDGE y propagada por OSPF (R1/R3)
-- [ ] Ping desde un host al loopback de cada ISP (R5)
+- [ x ] Verificar default route recibida por EDGE y propagada por OSPF (R1/R3)
+- [ x ] Ping desde un host al loopback de cada ISP (R5)
 
 ### Feature: Firewall edge
 *Criterio: filtro de entrada + plano de gestión protegido.*
