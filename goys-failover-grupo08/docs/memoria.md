@@ -687,3 +687,50 @@ La verificación de las tablas de enrutamiento de ISP-1 e ISP-2 nos permitió ev
 
 De esta manera, la fase complementa la conectividad eBGP establecida en F3.1 y permite integrar el enrutamiento interno OSPF con el intercambio de rutas externo BGP.
 
+## 6. Registro de cambios
+
+### 6.1 Change log
+
+Cada fila registra una intervención sobre los nodos con el formato definido en la sección 1.4: **fecha, rol, nodo, cambio, commit y rollback**. La columna *Commit* indica el commit del repositorio que versiona la configuración resultante (los `.rsc` de `backups/`). Los cambios se aplicaron en GNS3 y su estado queda respaldado en el commit citado.
+
+**Rollback general:** cada fase tiene un backup completo de los 7 routers. Para volver a la fase anterior se restaura el `.rsc` correspondiente (`/system reset-configuration no-defaults=yes skip-backup=yes` y luego `/import file-name=<router>.rsc`), o se revierte al snapshot de GNS3 de esa fase. Se recuerda que `/export` no incluye claves: tras restaurar hay que volver a cargar las claves OSPF, BGP y VRRP (sección 1.3.4). Si el acceso por red se pierde, se opera por la consola de GNS3.
+
+| Fase | Backup de partida (rollback) | Backup resultante |
+|---|---|---|
+| F2 | `backups/2026-10-08_F1_BASE/` | `backups/2026-10-11_F2_BASE/` |
+| F3 | `backups/2026-10-11_F2_BASE/` | `backups/2026-10-11_F3_BASE/` |
+
+#### 6.1.1 Fase 2: VRRP + OSPF
+
+Los `.rsc` de F2 difieren de los de F1 solo en los routers que participan de VRRP y OSPF (EDGE, CORE-1, CORE-2, DIST-1 y DIST-2). ISP-1 e ISP-2 no cambiaron.
+
+| Fecha | Rol | Nodo | Cambio | Commit | Rollback |
+|---|---|---|---|---|---|
+| 2026-10-11 | R4 | DIST-1 | VRRP v2 con auth simple: `vrrp-users` (vrid 10, prioridad 150, master) sobre `vlan10` y `vrrp-servers` (vrid 20, prioridad por defecto, backup) sobre `vlan20`. Gateways virtuales `192.168.10.1` y `192.168.20.1` | `e1f5757` | `/interface vrrp remove [find]` o restaurar `2026-10-08_F1_BASE/dist1.rsc` |
+| 2026-10-11 | R4 | DIST-2 | VRRP v2 con auth simple: `vrrp-servers` (vrid 20, prioridad 150, master) y `vrrp-users` (vrid 10, prioridad por defecto, backup) | `e1f5757` | `/interface vrrp remove [find]` o restaurar `2026-10-08_F1_BASE/dist2.rsc` |
+| 2026-10-11 | R3 | CORE-1 | OSPF área 0: instancia `ospf-instance-1` (router-id `4.4.4.4`), área `backbone-area` e interface-template en `ether9` a `ether12` y `lo`, con MD5 (`auth-id=1`) | `e1f5757` | Quitar el interface-template, el área y la instancia con `/routing ospf ... remove [find]` o restaurar `2026-10-08_F1_BASE/core1.rsc` |
+| 2026-10-11 | R3 | CORE-2 | OSPF área 0 (router-id `5.5.5.5`) en `ether9` a `ether12` y `lo`, con MD5; incluye el enlace core–core | `e1f5757` | Igual que CORE-1; restaurar `2026-10-08_F1_BASE/core2.rsc` |
+| 2026-10-11 | R4 | DIST-1 | OSPF área 0 (router-id `6.6.6.6`) en `ether9`, `ether10`, `vlan10`, `vlan20` y `lo`, con MD5 | `e1f5757` | Igual que CORE-1; restaurar `2026-10-08_F1_BASE/dist1.rsc` |
+| 2026-10-11 | R4 | DIST-2 | OSPF área 0 (router-id `7.7.7.7`) en `ether9`, `ether10`, `vlan10`, `vlan20` y `lo`, con MD5 | `e1f5757` | Igual que CORE-1; restaurar `2026-10-08_F1_BASE/dist2.rsc` |
+| 2026-10-11 | R1 | EDGE | OSPF área 0 (router-id `3.3.3.3`) hacia el core, en `ether11`, `ether12` y `lo`, con MD5 | `e1f5757` | Igual que CORE-1; restaurar `2026-10-08_F1_BASE/edge.rsc` |
+| 2026-10-11 | R5 | Los 7 routers | Backup post-F2: `/export` de cada router versionado en `backups/2026-10-11_F2_BASE/`, con capturas de verificación en `capturas/F2/` | `e1f5757` | No aplica (el backup es la referencia de restauración) |
+| 2026-10-13 | R5 | Documentación | Se documenta VRRP en la memoria (sección 3.1) | `0c4c1ef` | `git revert 0c4c1ef` |
+
+#### 6.1.2 Fase 3: BGP + firewall
+
+Entre F2 y F3 cambiaron EDGE, ISP-1 e ISP-2. CORE-1, CORE-2, DIST-1 y DIST-2 no tuvieron cambios de configuración (sus `.rsc` son iguales a los de F2).
+
+| Fecha | Rol | Nodo | Cambio | Commit | Rollback |
+|---|---|---|---|---|---|
+| 2026-10-11 | R1 | EDGE | eBGP multi-homing: instancia BGP (AS `65000`, router-id `3.3.3.3`), template `ebgp-peers` y conexiones `bgp-isp1` (`10.255.0.2`, AS `65001`) y `bgp-isp2` (`10.255.0.6`, AS `65002`), con TCP-MD5 | `4cc7d15` | `/routing bgp connection remove [find]` o restaurar `2026-10-11_F2_BASE/edge.rsc` |
+| 2026-10-11 | R2 | ISP-1 | eBGP hacia EDGE: instancia BGP (AS `65001`, router-id `1.1.1.1`), template `ebgp-edge` y conexión `bgp-edge` (`10.255.0.1`, AS `65000`) con TCP-MD5 y `output.redistribute=connected` | `4cc7d15` | `/routing bgp connection remove [find]` o restaurar `2026-10-11_F2_BASE/isp1.rsc` |
+| 2026-10-11 | R2 | ISP-2 | eBGP hacia EDGE: instancia BGP (AS `65002`, router-id `2.2.2.2`) y conexión `bgp-edge` con TCP-MD5 y `output.redistribute=connected` | `4cc7d15` | `/routing bgp connection remove [find]` o restaurar `2026-10-11_F2_BASE/isp2.rsc` |
+| 2026-10-11 | R1 | EDGE | Redistribución OSPF a BGP con filtro: `redistribute=ospf` y cadena de salida `bgp-out-filter`, que solo acepta prefijos dentro de `192.168.0.0/16` | `4cc7d15` | `/routing filter rule remove [find chain=bgp-out-filter]` y quitar `redistribute` de las conexiones, o restaurar `2026-10-11_F2_BASE/edge.rsc` |
+| 2026-10-11 | R1 | EDGE | Salida a "Internet": la instancia OSPF pasa a `originate-default=always` para anunciar la ruta por defecto al dominio | `4cc7d15` | `/routing ospf instance set [find] originate-default=never` |
+| 2026-10-11 | R1 | EDGE | Firewall: lista de interfaces `WAN` (`ether9`, `ether10`), reglas de `input` y `forward` (`established,related`, OSPF, ICMP, descarte desde WAN, descarte de inválidos), acceso SSH/Winbox solo desde interfaces fuera de `WAN` y NAT `masquerade` hacia ambos ISP | `4cc7d15` | `/ip firewall filter remove [find]` y `/ip firewall nat remove [find]`; hacerlo por consola de GNS3 si se pierde el acceso |
+| 2026-10-14 | R5 | Los 7 routers | Backup post-F3: `/export` de cada router versionado en `backups/2026-10-11_F3_BASE/`, con capturas de verificación en `capturas/F3/` | `4cc7d15` | No aplica (el backup es la referencia de restauración) |
+
+**Nota sobre las fechas:** los `.rsc` de F2 y F3 llevan fecha de exportación del 11/10 (el nombre de la carpeta de F3 también). El commit de F2 es del 11/10 y el de F3 del 14/10, por lo que las filas de F3 usan la fecha del export para el cambio y la del commit para el backup.
+
+**Pendiente de registrar:** los cambios de F1 (despliegue, direccionamiento, hardening y backup inicial) no figuran todavía en este change log.
+
