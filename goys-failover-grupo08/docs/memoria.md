@@ -574,6 +574,7 @@ El commit `ops(backup): agrega respaldos rsc, evidencias de conectividad y harde
 ![Snapshot BASE](../capturas/F1/snapshot_base_f1.png)
 ![Export y backup por router](../capturas/F1/exportYBackupPorRouter.png)
 
+
 ## 3.Configuracion
 ### 3.1 Desarrollo de VRRP
 
@@ -717,3 +718,117 @@ OSPF área 0 quedó operativo en los cinco routers, con adyacencias `Full` en to
 Con esto se habilita la verificación de conectividad de capa 3 entre hosts y la integración con BGP en EDGE, correspondientes a las actividades siguientes de las Fases 2 y 3.
 
 Observación para la revisión: las interfaces `vlan10` y `vlan20` de DIST-1 y DIST-2 están en OSPF como interfaces activas, por eso los dos routers forman una adyacencia entre sí por las LAN. No afecta el funcionamiento, pero se podría reducir con `passive=yes` en esas interfaces si se prefiere que las LAN solo se anuncien y no formen vecindades.
+
+## 4. Implementacion de BGP + firewall
+### 4.1 eBGP Multi-homing
+El objetivo de esta etapa corresponde a implementar conectividad mediante el protocolo eBGP entre el router EDGE y los dos proveedores de servicios de internet, ISP-1 e ISP-2
+
+Esta configuracion nos permite que EDGE establezca sesiones BGP independientes con ambos proveedores, proporcionando asi una arquitectura con multiples conexiones externas. Asimismo, tambien nos permite preparar la infraestructura para anunciar las redes internas hacia los ISP y disponer de información de enrutamiento intercambiada mediante BGP.
+
+#### 4.1.1 Configuracion de eBGP en EDGE
+Para comenzar, en el router EDGE se configuraron las conexiones BGP correspondientes a ISP-1 e ISP-2. Para ello, se definieron los parámetros necesarios para identificar cada vecino.
+
+Ademas, tambien se configuro la autenticacion TCP-MD5 para proteger el establecimiento de las sesiones BGP mediante una clave compartida entre cada par de vecinos.
+
+![Configuracion de eBGP en EDGE](../capturas/F3/configuracionBGP-EDGE.png)
+
+#### 4.1.2 Configuración de eBGP en ISP-1 e ISP-2
+Seguido de esto, en los routers ISP-1 e ISP-2 se configuraron las conexiones BGP hacia EDGE, utilizando los parámetros de vecindad correspondientes y las mismas claves TCP-MD5 definidas en el extremo remoto para cada enlace.
+
+![Aplicacion de clave TCP-MD5 Foto1](../capturas/F3/wrongPasswordTCP-MD5.png)
+![Aplicacion de clave TCP-MD5 Foto2](../capturas/F3/wrongPasswordTCP-MD5-2.png)
+![Aplicacion de clave TCP-MD5 Foto3](../capturas/F3/wrongPasswordTCP-MD5-3.png)
+
+Ademas, tambien se configuro la opcion de anuncio de la ruta por defecto según los requisitos de la práctica, con el propósito de permitir que EDGE pudiera recibir una ruta por defecto desde los proveedores. La disponibilidad efectiva de esta ruta depende de la configuración aplicada y de la política de anuncios de cada ISP.
+
+![Configuracion de eBGP en ISP-1](../capturas/F3/configuracionBGP-ISP1.png)
+*Configuracion de eBGP en ISP-1*
+
+![Configuracion de eBGP en ISP-2](../capturas/F3/configuracionBGP-ISP2.png)
+*Configuracion de eBGP en ISP-1*
+
+#### 4.1.3 Verificación de las sesiones BGP
+Una vez finalizada la configuración, se verificó el estado de las sesiones BGP en EDGE.
+Lo cual se realizo a partir de ejecutar `/routing/bgp/session/print`, en donde se verifico que el estado Established sea indicado en la sesión BGP establecida y que los vecinos pueden intercambiar información de enrutamiento. Se verificó que tanto ISP-1 como ISP-2 alcanzaran dicho estado, de acuerdo con el criterio de aceptación definido para esta fase.
+
+![Certificación de las sesiones eBGP en EDGE.](../capturas/F3/estadoFinalEDGE_A.png)
+
+Comprobando asi que el estado de las sesiones con ambos proveedores.
+
+### 4.2 Redistribución OSPF -> BGP en EDGE
+Segun la configuracion de enrutamiento interno implementada en F2, se configuro en EDGE el mecanimso de redistribucion de rutas OSPF hacia BGP.
+
+Con esta configuración se nos permite utilizar la información de enrutamiento interno para asi generar anuncios destinados a los vecinos BGP.
+
+Cabe aclarar, que para evitar la publicación indiscriminada de rutas, se incorporaron filtros que delimitan los prefijos autorizados para su anuncio, ya que los filtros permiten determinar que redes internas se exponen al exterior y reducen el riesgo de anunciar rutas que no corresponden a la politica de enrutamiento.
+
+![Filtros de EDGE](../capturas/F3/cadenaDeFiltros.png)
+
+![Verificación en EDGE](../capturas/F3/estadoFinalEDGE_A.png)
+
+#### 4.2.1 Verificación de las LAN anunciadas en ISP-1 y ISP-2
+
+Una vez configurada la redistribución, se consultó la tabla de rutas de ISP-1 y ISP-2 para comprobar la recepción de los prefijos internos anunciados por EDGE.
+
+Ya con la verificación se centró en identificar las redes LAN previstas en el diseño y comprobar que fueran reconocidas como rutas BGP. De este forma, se evaluó el resultado de la redistribución desde la perspectiva del primer proveedor, en lugar de limitar la comprobación a la configuración local de EDGE.
+
+![Verificación en ISP1](../capturas/F3/estadoFinalISP-1.png)
+
+![Verificación en ISP2](../capturas/F3/estadoFinalISP-2.png)
+
+#### 4.2.2 Resultado de la fase
+
+Con esta fase se implemento el mecanismo de redistribución de rutas OSPF hacia BGP en EDGE, con filtros para controlar los anuncios externos.
+
+La verificación de las tablas de enrutamiento de ISP-1 e ISP-2 nos permitió evaluar si las LAN internas definidas por el laboratorio fueron propagadas correctamente mediante BGP. El criterio de aceptación se considera cumplido cuando los prefijos esperados aparecen en ambos proveedores como rutas BGP y las capturas aportan evidencia suficiente de su recepción.
+
+De esta manera, la fase complementa la conectividad eBGP establecida en F3.1 y permite integrar el enrutamiento interno OSPF con el intercambio de rutas externo BGP.
+
+### 4.3 Salida a "Internet"
+
+El objetivo de esta etapa es comprobar que los hosts de la red interna alcanzan el "Internet" simulado por el laboratorio, representado por las loopbacks de los proveedores (`1.1.1.1` en ISP-1 y `2.2.2.2` en ISP-2), y que la información de salida se propaga correctamente por el dominio OSPF.
+
+#### 4.3.1 Ruta por defecto en EDGE y propagación por OSPF
+
+Para que los routers internos sepan hacia dónde enviar el tráfico externo, EDGE origina una ruta por defecto dentro de OSPF. En la instancia OSPF de EDGE se configuró `originate-default=always`, por lo que la ruta `0.0.0.0/0` se anuncia al área 0 de forma permanente.
+
+![Instancia OSPF de EDGE con originate-default=always](../capturas/F3/estadoFinalEDGE_B.png)
+
+Se verificó la propagación en el resto de los routers con `/ip route print`:
+
+| Router | Ruta `0.0.0.0/0` | Gateway | Distancia |
+|---|---|---|---|
+| CORE-1 | Aprendida por OSPF | `10.255.0.9` (EDGE, `ether9`) | `110` |
+| DIST-1 | Aprendida por OSPF, 2 caminos (ECMP) | `10.255.0.21` (CORE-1, `ether9`) y `10.255.0.29` (CORE-2, `ether10`) | `110` |
+
+CORE-1 llega a la salida directamente por EDGE, y DIST-1 reparte el tráfico entre ambos routers de core. Con esto la ruta por defecto queda disponible hasta la capa de distribución, y los hosts la alcanzan a través del gateway virtual VRRP.
+
+![Tabla de ruteo de CORE-1](../capturas/F3/estadoFinalCORE1.png)
+
+![Tabla de ruteo de DIST-1](../capturas/F3/estadoFinalDIST1.png)
+
+**Observación sobre la ruta recibida de los ISP:** en la tabla de ruteo de EDGE no figura una ruta `0.0.0.0/0` aprendida por BGP. Las sesiones con ISP-1 e ISP-2 están en estado `Established` y cada una intercambia 2 prefijos (la loopback del proveedor y el enlace), pero ninguno es una ruta por defecto. En EDGE, las rutas hacia los ISP son específicas: `1.1.1.1/32` vía `10.255.0.2` y `2.2.2.2/32` vía `10.255.0.6`, ambas con distancia `20` (eBGP). La default que ven los routers internos es, entonces, la que origina el propio EDGE en OSPF y no una recibida de los proveedores.
+
+![Sesiones BGP y tabla de ruteo de EDGE](../capturas/F3/estadoFinalEDGE_A.png)
+
+#### 4.3.2 Prueba de alcance a las loopbacks de los ISP
+
+Desde PC-USER (`192.168.10.100`) se ejecutó `ping` a la loopback de cada proveedor:
+
+| Origen | Destino | Resultado |
+|---|---|---|
+| PC-USER | `1.1.1.1` (ISP-1) | 3 enviados, 3 recibidos, 0 % de pérdida, TTL 61 |
+| PC-USER | `2.2.2.2` (ISP-2) | 3 enviados, 3 recibidos, 0 % de pérdida, TTL 61 |
+
+El TTL de 61 corresponde a tres saltos de router (DIST, CORE y EDGE) desde el valor inicial de 64, coherente con el camino `PC-USER → DIST → CORE → EDGE → ISP`.
+
+![Ping desde PC-USER a las loopbacks de ISP-1 e ISP-2](../capturas/F3/verificacionFinalPingueoALoopbacksDesdePC-USER.png)
+
+El camino de ida usa la default de OSPF hasta EDGE, y desde EDGE las rutas específicas de BGP hacia cada ISP. La respuesta vuelve porque los ISP conocen las LAN internas por la redistribución OSPF → BGP (sección 4.2) y porque EDGE aplica NAT `masquerade` en `ether9` y `ether10`.
+
+#### 4.3.3 Resultado de la fase
+
+El criterio de aceptación se cumple: un host de la red interna alcanza la loopback de ISP-1 y la de ISP-2. EDGE origina la ruta por defecto hacia el dominio OSPF y esta llega a CORE-1, CORE-2 y a la capa de distribución.
+
+Queda como punto a tener en cuenta para la revisión que la salida funciona porque EDGE tiene rutas específicas hacia las loopbacks de los ISP y origina la default con `always`. La default no depende de que los ISP la anuncien por BGP, de modo que el alcance a destinos que no sean esas loopbacks no está probado en este laboratorio.
+

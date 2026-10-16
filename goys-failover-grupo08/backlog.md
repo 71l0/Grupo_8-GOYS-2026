@@ -116,19 +116,19 @@ Formato de tarea: `- [ ] descripción (Rol)`
 
 ### Feature: eBGP multi-homing
 *Criterio: 2 sesiones established (EDGE↔ISP-1, EDGE↔ISP-2), con TCP-MD5.*
-- [ ] Configurar eBGP en EDGE hacia ISP-1 y ISP-2 con TCP-MD5 (R1)
-- [ ] Configurar eBGP en ISP-1 e ISP-2 con TCP-MD5 y default-originate (R2)
-- [ ] Verificar ambas sesiones en estado established (R5)
+- [ x ] Configurar eBGP en EDGE hacia ISP-1 y ISP-2 con TCP-MD5 (R1)
+- [ x ] Configurar eBGP en ISP-1 e ISP-2 con TCP-MD5 y default-originate (R2)
+- [ x ] Verificar ambas sesiones en estado established (R5)
 
 ### Feature: Redistribución
 *Criterio: OSPF→BGP, las LANs se anuncian a los ISP.*
-- [ ] Redistribuir OSPF→BGP en EDGE con filtros (R1)
-- [ ] Verificar que las LANs aparecen en la tabla de ISP-1 e ISP-2 (R2)
+- [ x ] Redistribuir OSPF→BGP en EDGE con filtros (R1)
+- [ x ] Verificar que las LANs aparecen en la tabla de ISP-1 e ISP-2 (R2)
 
 ### Feature: Salida a "Internet"
 *Criterio: host alcanza el loopback del ISP.*
-- [ ] Verificar default route recibida por EDGE y propagada por OSPF (R1/R3)
-- [ ] Ping desde un host al loopback de cada ISP (R5)
+- [ x ] Verificar default route recibida por EDGE y propagada por OSPF (R1/R3)
+- [ x ] Ping desde un host al loopback de cada ISP (R5)
 
 ### Feature: Firewall edge
 *Criterio: filtro de entrada + plano de gestión protegido.*
