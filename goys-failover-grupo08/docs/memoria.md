@@ -901,3 +901,19 @@ La cadena `forward` filtra el trafico que atraviesa EDGE entre la red interna y 
 
 ![Configuracion del firewall en EDGE](../capturas/F3/firewallFilter-EDGE.png)
 *Configuracion del firewall filter y de la lista WAN en EDGE*
+
+#### 4.4.3 Protección del plano de gestión
+
+El acceso de gestion a EDGE queda protegido desde los enlaces WAN: cualquier conexion nueva que llegue por `ether9` o `ether10` es descartada por las reglas 4 y 5 de la cadena `input`, incluidos SSH y Winbox. Desde la red interna se permite SSH (puerto 22) y Winbox (puerto 8291) mediante la regla 6.
+
+Esto se complementa con el hardening aplicado en F1 (seccion 2.3), donde se deshabilitaron `ftp`, `telnet`, `www`, `www-ssl`, `api` y `api-ssl`, dejando solo `ssh` y `winbox` como servicios de gestion.
+
+#### 4.4.4 Resultado de la implementación
+
+Con esta configuracion EDGE cuenta con un filtro de entrada que acepta el trafico establecido, OSPF e ICMP, y bloquea el trafico no solicitado desde ambos ISP, tanto hacia el router como a traves de el. La salida de las LAN hacia los proveedores sigue funcionando, como se comprobo en la seccion 4.3.
+
+Observación para la revisión: la configuracion se tomo del respaldo `backups/2026-10-11_F3_BASE/edge.rsc` y de la captura. Hay algunos puntos a tener en cuenta:
+
+- La cadena `input` no termina con una regla de drop general. El bloqueo aplica a lo que llega por las interfaces WAN, y lo que llega desde la red interna y no coincide con ninguna regla es aceptado por defecto. Por eso la regla 6 (SSH/Winbox) no restringe por si sola el acceso interno.
+- En el respaldo, la regla `established,related` de la cadena `forward` aparece dos veces. No afecta el funcionamiento, pero se podria dejar una sola.
+- No hay una regla explicita para BGP (TCP 179). Las sesiones con los ISP funcionan porque el trafico de respuesta entra como `established`, pero se podria agregar una regla de accept para BGP desde las IP de los vecinos si se quiere dejarlo explicito.
