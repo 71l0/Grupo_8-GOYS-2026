@@ -106,9 +106,9 @@ Formato de tarea: `- [ ] descripción (Rol)`
 
 ### Feature: Verificación L3
 *Criterio: ping intra-LAN + gateway virtual responde.*
-- [ ] Ping host ↔ gateway virtual en ambas LANs (R5)
-- [ ] Ping entre hosts de distintas LANs (R5)
-- [ ] Backup post-F2 y registro en change log (R5)
+- [ x ] Ping host ↔ gateway virtual en ambas LANs (R5)
+- [ x ] Ping entre hosts de distintas LANs (R5)
+- [ x ] Backup post-F2 y registro en change log (R5)
 
 ---
 
@@ -132,9 +132,9 @@ Formato de tarea: `- [ ] descripción (Rol)`
 
 ### Feature: Firewall edge
 *Criterio: filtro de entrada + plano de gestión protegido.*
-- [ ] Reglas de entrada (input/forward) en EDGE, con `established,related` y drop por defecto (R1)
-- [ ] Restringir acceso de gestión (SSH/Winbox) a origen permitido (R1)
-- [ ] Probar reglas y capturar evidencia (R5)
+- [ x ] Reglas de entrada (input/forward) en EDGE, con `established,related` y drop por defecto (R1)
+- [ x ] Restringir acceso de gestión (SSH/Winbox) a origen permitido (R1)
+- [ x ] Probar reglas y capturar evidencia (R5)
 
 ---
 

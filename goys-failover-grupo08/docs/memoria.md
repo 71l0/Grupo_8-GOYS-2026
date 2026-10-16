@@ -719,6 +719,41 @@ Con esto se habilita la verificación de conectividad de capa 3 entre hosts y la
 
 Observación para la revisión: las interfaces `vlan10` y `vlan20` de DIST-1 y DIST-2 están en OSPF como interfaces activas, por eso los dos routers forman una adyacencia entre sí por las LAN. No afecta el funcionamiento, pero se podría reducir con `passive=yes` en esas interfaces si se prefiere que las LAN solo se anuncien y no formen vecindades.
 
+### 3.3 Verificación L3
+
+El objetivo de esta parte corresponde a comprobar la conectividad de capa 3 una vez configurados VRRP y OSPF. Para ello se verifico que los hosts alcancen su gateway virtual y que exista comunicacion entre las dos LAN.
+
+#### 3.3.1 Ping al gateway virtual
+
+Desde cada host se ejecuto `ping` hacia la direccion IP virtual de su grupo VRRP, que es el gateway configurado en el equipo.
+
+| Origen | Destino | Gateway virtual de | Resultado |
+|---|---|---|---|
+| PC-USER (`192.168.10.100`) | `192.168.10.1` | VRID 10 (USERS) | 3 enviados, 3 recibidos, 0 % de pérdida, TTL 64 |
+| PC-SERVER (`192.168.20.100`) | `192.168.20.1` | VRID 20 (SERVERS) | 3 enviados, 3 recibidos, 0 % de pérdida, TTL 64 |
+
+En ambos casos el gateway virtual responde, por lo que los hosts tienen salida hacia el router Master de su grupo.
+
+![Ping al gateway virtual desde PC-USER](../capturas/F2/pingGatewayVirtualDesdePC-USER.png)
+
+![Ping al gateway virtual desde PC-SERVER](../capturas/F2/pingGatewayVirtualDesdePC-SERVER.png)
+
+#### 3.3.2 Ping entre hosts de distintas LAN
+
+Luego se comprobo la comunicacion entre las dos redes, ejecutando `ping` desde PC-USER hacia PC-SERVER.
+
+| Origen | Destino | Resultado |
+|---|---|---|
+| PC-USER (`192.168.10.100`) | PC-SERVER (`192.168.20.100`) | 3 enviados, 3 recibidos, 0 % de pérdida, TTL 63 |
+
+El TTL de 63 corresponde a un salto de router desde el valor inicial de 64, ya que el trafico pasa de la LAN de usuarios a la de servidores a traves de la capa de distribucion.
+
+![Ping entre PC-USER y PC-SERVER](../capturas/F2/pingPC-USER-PC-SERVER.png)
+
+#### 3.3.3 Resultado de la verificación
+
+El criterio de aceptación se cumple: los dos hosts alcanzan su gateway virtual y existe conectividad entre las LAN de usuarios y servidores. Con esto queda comprobado el funcionamiento conjunto de VRRP y OSPF definido para la Fase 2.
+
 ## 4. Implementacion de BGP + firewall
 ### 4.1 eBGP Multi-homing
 El objetivo de esta etapa corresponde a implementar conectividad mediante el protocolo eBGP entre el router EDGE y los dos proveedores de servicios de internet, ISP-1 e ISP-2
@@ -878,3 +913,70 @@ El criterio de aceptación se cumple: un host de la red interna alcanza la loopb
 
 Queda como punto a tener en cuenta para la revisión que la salida funciona porque EDGE tiene rutas específicas hacia las loopbacks de los ISP y origina la default con `always`. La default no depende de que los ISP la anuncien por BGP, de modo que el alcance a destinos que no sean esas loopbacks no está probado en este laboratorio.
 
+
+### 4.4 Firewall edge
+
+El objetivo de esta etapa corresponde a proteger el router EDGE, que es el punto de contacto con los proveedores. Para ello se configuro un filtro de entrada en `/ip firewall filter` que acepta el trafico necesario para el funcionamiento de la red y bloquea el trafico no solicitado que llega desde los enlaces WAN (`ether9` hacia ISP-1 y `ether10` hacia ISP-2).
+
+Antes de cargar las reglas se creo la lista de interfaces `WAN` con `ether9` y `ether10`, que se utiliza para identificar el trafico que proviene de los ISP.
+
+#### 4.4.1 Reglas de la cadena input
+
+La cadena `input` filtra el trafico dirigido al propio router EDGE.
+
+| # | Acción | Condición | Función |
+|---|---|---|---|
+| 1 | accept | `connection-state=established,related` | Aceptar conexiones establecidas o relacionadas |
+| 2 | accept | `protocol=ospf` | Permitir OSPF con CORE-1 y CORE-2 |
+| 3 | accept | `protocol=icmp` | Permitir ping/ICMP de gestion |
+| 4 | drop | `in-interface=ether9` | Bloquear trafico no deseado desde ISP-1 |
+| 5 | drop | `in-interface=ether10` | Bloquear trafico no deseado desde ISP-2 |
+| 6 | accept | `protocol=tcp dst-port=22,8291 in-interface-list=!WAN` | Permitir SSH/Winbox desde la red interna |
+
+#### 4.4.2 Reglas de la cadena forward
+
+La cadena `forward` filtra el trafico que atraviesa EDGE entre la red interna y los ISP.
+
+| # | Acción | Condición | Función |
+|---|---|---|---|
+| 1 | accept | `connection-state=established,related` | Aceptar trafico establecido o relacionado |
+| 2 | accept | `src-address=192.168.0.0/16` | Permitir la salida de las LAN hacia "Internet" |
+| 3 | drop | `connection-state=invalid` | Descartar paquetes invalidos |
+| 4 | drop | `in-interface=ether9 connection-nat-state=!dstnat` | Bloquear trafico entrante no solicitado desde ISP-1 |
+| 5 | drop | `in-interface=ether10 connection-nat-state=!dstnat` | Bloquear trafico entrante no solicitado desde ISP-2 |
+
+![Configuracion del firewall en EDGE](../capturas/F3/firewallFilter-EDGE.png)
+*Configuracion del firewall filter y de la lista WAN en EDGE*
+
+#### 4.4.3 Protección del plano de gestión
+
+El acceso de gestion a EDGE queda protegido desde los enlaces WAN: cualquier conexion nueva que llegue por `ether9` o `ether10` es descartada por las reglas 4 y 5 de la cadena `input`, incluidos SSH y Winbox. Desde la red interna se permite SSH (puerto 22) y Winbox (puerto 8291) mediante la regla 6.
+
+Esto se complementa con el hardening aplicado en F1 (seccion 2.3), donde se deshabilitaron `ftp`, `telnet`, `www`, `www-ssl`, `api` y `api-ssl`, dejando solo `ssh` y `winbox` como servicios de gestion.
+
+#### 4.4.4 Prueba de las reglas
+
+Para comprobar el funcionamiento del firewall se verifico que las reglas esten cargadas y activas, y que el trafico permitido siga pasando por EDGE con el filtro aplicado.
+
+| Prueba | Regla involucrada | Resultado | Evidencia |
+|---|---|---|---|
+| Reglas cargadas y activas | Cadenas `input` y `forward` | Las 12 reglas figuran en `/ip firewall filter print` sin la marca `X` (deshabilitada) | `estadoFinalEDGE_C.png` |
+| NAT hacia los ISP | `srcnat masquerade` en `ether9` y `ether10` | Configurado en ambos enlaces WAN | `estadoFinalEDGE_C.png` |
+| Salida de las LAN hacia "Internet" | `forward` regla 2 (`src-address=192.168.0.0/16`) | PC-USER alcanza `1.1.1.1` y `2.2.2.2` (0 % de pérdida) | `verificacionFinalPingueoALoopbacksDesdePC-USER.png` (sección 4.3.2) |
+| Sesiones BGP con los ISP | `input` regla 1 (`established,related`) | Sesiones con ISP-1 e ISP-2 en estado `Established` | `estadoFinalEDGE_A.png` (sección 4.1.3) |
+| Adyacencias OSPF de EDGE | `input` regla 2 (`protocol=ospf`) | Adyacencias con CORE-1 y CORE-2 operativas | Sección 3.2.3 |
+
+![Reglas del firewall y NAT activas en EDGE](../capturas/F3/estadoFinalEDGE_C.png)
+*Estado final de `/ip firewall filter` y `/ip firewall nat` en EDGE*
+
+Con esto se comprueba que el filtro esta activo y no interrumpe el trafico necesario para la red.
+
+#### 4.4.5 Resultado de la implementación
+
+Con esta configuracion EDGE cuenta con un filtro de entrada que acepta el trafico establecido, OSPF e ICMP, y bloquea el trafico no solicitado desde ambos ISP, tanto hacia el router como a traves de el. La salida de las LAN hacia los proveedores sigue funcionando, como se comprobo en la seccion 4.3.
+
+Observación para la revisión: la configuracion se tomo del respaldo `backups/2026-10-11_F3_BASE/edge.rsc` y de la captura. Hay algunos puntos a tener en cuenta:
+
+- La cadena `input` no termina con una regla de drop general. El bloqueo aplica a lo que llega por las interfaces WAN, y lo que llega desde la red interna y no coincide con ninguna regla es aceptado por defecto. Por eso la regla 6 (SSH/Winbox) no restringe por si sola el acceso interno.
+- En el respaldo, la regla `established,related` de la cadena `forward` aparece dos veces. No afecta el funcionamiento, pero se podria dejar una sola.
+- No hay una regla explicita para BGP (TCP 179). Las sesiones con los ISP funcionan porque el trafico de respuesta entra como `established`, pero se podria agregar una regla de accept para BGP desde las IP de los vecinos si se quiere dejarlo explicito.
