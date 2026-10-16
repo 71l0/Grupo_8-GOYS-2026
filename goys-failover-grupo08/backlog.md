@@ -116,9 +116,9 @@ Formato de tarea: `- [ ] descripción (Rol)`
 
 ### Feature: eBGP multi-homing
 *Criterio: 2 sesiones established (EDGE↔ISP-1, EDGE↔ISP-2), con TCP-MD5.*
-- [ ] Configurar eBGP en EDGE hacia ISP-1 y ISP-2 con TCP-MD5 (R1)
-- [ ] Configurar eBGP en ISP-1 e ISP-2 con TCP-MD5 y default-originate (R2)
-- [ ] Verificar ambas sesiones en estado established (R5)
+- [ x ] Configurar eBGP en EDGE hacia ISP-1 y ISP-2 con TCP-MD5 (R1)
+- [ x ] Configurar eBGP en ISP-1 e ISP-2 con TCP-MD5 y default-originate (R2)
+- [ x ] Verificar ambas sesiones en estado established (R5)
 
 ### Feature: Redistribución
 *Criterio: OSPF→BGP, las LANs se anuncian a los ISP.*
