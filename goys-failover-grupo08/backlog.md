@@ -134,7 +134,7 @@ Formato de tarea: `- [ ] descripción (Rol)`
 *Criterio: filtro de entrada + plano de gestión protegido.*
 - [ x ] Reglas de entrada (input/forward) en EDGE, con `established,related` y drop por defecto (R1)
 - [ x ] Restringir acceso de gestión (SSH/Winbox) a origen permitido (R1)
-- [ ] Probar reglas y capturar evidencia (R5)
+- [ x ] Probar reglas y capturar evidencia (R5)
 
 ---
 
