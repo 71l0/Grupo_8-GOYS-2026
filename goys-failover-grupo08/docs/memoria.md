@@ -621,6 +621,103 @@ Con la configuración de VRRP se establecen dos gateways virtuales redundantes p
 
 Gracias a esta implementación se establece la base de redundancia de capa 3 requerida para continuar con las verificaciones de conectividad y con la integración del enrutamiento dinámico mediante OSPF, correspondiente a las siguientes actividades de la Fase 2.
 
+### 3.2 Desarrollo de OSPF área 0
+
+El objetivo de esta parte es implementar enrutamiento dinámico mediante OSPF en un único dominio (área 0, backbone) que abarque a EDGE, CORE-1, CORE-2, DIST-1 y DIST-2, de modo que cada router aprenda las loopbacks, los enlaces punto a punto y las LAN de usuarios y servidores sin rutas estáticas. Los routers ISP-1 e ISP-2 quedan fuera de OSPF: se conectan con EDGE por eBGP (Fase 3).
+
+Con OSPF también se aprovecha la redundancia de la topología: cada router de distribución llega a EDGE por dos caminos (vía CORE-1 y vía CORE-2), y el enlace directo CORE-1 ↔ CORE-2 forma parte del área.
+
+#### 3.2.1 Configuración de OSPF
+
+En los cinco routers se creó la misma estructura de RouterOS 7: una instancia (`ospf-instance-1`), el área `backbone-area` (área 0) y un `interface-template` que activa OSPF en las interfaces indicadas.
+
+| Router | Router-ID | Interfaces en OSPF | Vecinos esperados |
+|---|---|---|---|
+| EDGE | `3.3.3.3` | `ether11`, `ether12`, `lo` | CORE-1, CORE-2 |
+| CORE-1 | `4.4.4.4` | `ether9`, `ether10`, `ether11`, `ether12`, `lo` | EDGE, CORE-2, DIST-1, DIST-2 |
+| CORE-2 | `5.5.5.5` | `ether9`, `ether10`, `ether11`, `ether12`, `lo` | EDGE, CORE-1, DIST-1, DIST-2 |
+| DIST-1 | `6.6.6.6` | `ether9`, `ether10`, `vlan10`, `vlan20`, `lo` | CORE-1, CORE-2 (y DIST-2 por las VLAN) |
+| DIST-2 | `7.7.7.7` | `ether9`, `ether10`, `vlan10`, `vlan20`, `lo` | CORE-1, CORE-2 (y DIST-1 por las VLAN) |
+
+Los Router-ID coinciden con las loopbacks definidas en el IPAM (sección 1.2.6). EDGE no anuncia en OSPF sus enlaces hacia los ISP (`ether9` y `ether10`): esos enlaces pertenecen a la frontera con BGP.
+
+Además, en EDGE la instancia OSPF se configuró con `originate-default=always`, de modo que el resto del dominio reciba una ruta por defecto desde EDGE. Esto se completa en la Fase 3 con la salida hacia los ISP.
+
+*Evidencia de configuración*
+
+| Router | Captura |
+|---|---|
+| EDGE | ![Configuración OSPF en EDGE](../capturas/F2/configOSPF-EDGE.png) |
+| CORE-1 | ![Configuración OSPF en CORE-1](../capturas/F2/configOSPF-CORE1.png) |
+| CORE-2 | ![Configuración OSPF en CORE-2](../capturas/F2/configOSPF-CORE2.png) |
+| DIST-1 | ![Configuración OSPF en DIST-1](../capturas/F2/configOSPF-DIST1.png) |
+| DIST-2 | ![Configuración OSPF en DIST-2](../capturas/F2/configOSPF-DIST2.png) |
+
+#### 3.2.2 Autenticación MD5
+
+Según la política de seguridad (sección 1.3.3), todas las interfaces OSPF usan autenticación MD5 con `auth-id=1` y una única clave `<OSPF_KEY>` para toda el área 0. La clave se aplica en el `interface-template` de cada router:
+
+```routeros
+/routing ospf interface-template
+add area=backbone-area auth=md5 auth-id=1 interfaces=<interfaces del router>
+```
+
+En los respaldos (`backups/2026-10-11_F2_BASE/`) se ve `auth=md5 auth-id=1` en los cinco routers. La clave en sí no figura, porque `/export` oculta los datos sensibles. Que todas las adyacencias lleguen a `Full` confirma que la clave es la misma en todo el área: un router con otra clave no formaría la adyacencia. La prueba explícita con clave incorrecta corresponde a la Fase 4.
+
+#### 3.2.3 Verificación de adyacencias
+
+Se ejecutó `/routing ospf neighbor print` en cada router. Todas las adyacencias están en estado `Full`.
+
+| Router | Vecinos en `Full` | Interfaz |
+|---|---|---|
+| EDGE | CORE-1 (`4.4.4.4`) | `ether11` |
+| | CORE-2 (`5.5.5.5`) | `ether12` |
+| CORE-1 | EDGE (`3.3.3.3`) | `ether9` |
+| | CORE-2 (`5.5.5.5`) | `ether10` |
+| | DIST-1 (`6.6.6.6`) | `ether11` |
+| | DIST-2 (`7.7.7.7`) | `ether12` |
+| CORE-2 | EDGE (`3.3.3.3`) | `ether9` |
+| | CORE-1 (`4.4.4.4`) | `ether10` |
+| | DIST-1 (`6.6.6.6`) | `ether11` |
+| | DIST-2 (`7.7.7.7`) | `ether12` |
+| DIST-1 | CORE-1 (`4.4.4.4`) | `ether9` |
+| | CORE-2 (`5.5.5.5`) | `ether10` |
+| | DIST-2 (`7.7.7.7`) | `vlan10` y `vlan20` |
+| DIST-2 | CORE-1 (`4.4.4.4`) | `ether9` |
+| | CORE-2 (`5.5.5.5`) | `ether10` |
+| | DIST-1 (`6.6.6.6`) | `vlan10` y `vlan20` |
+
+La adyacencia `CORE-1 ↔ CORE-2` (`ether10` en ambos) cumple el requisito del enlace core–core dentro del área. DIST-1 y DIST-2 también se vuelven vecinos entre sí a través de las VLAN 10 y 20, porque esas interfaces participan en OSPF y los dos routers comparten esos segmentos.
+
+*Evidencia: `/routing ospf neighbor print`*
+
+| Router | Captura |
+|---|---|
+| EDGE | ![Vecinos OSPF en EDGE](../capturas/F2/verificacionOSPF-EDGE.png) |
+| CORE-1 | ![Vecinos OSPF en CORE-1](../capturas/F2/verificacionOSPF-CORE1.png) |
+| CORE-2 | ![Vecinos OSPF en CORE-2](../capturas/F2/verificacionOSPF-CORE2.png) |
+| DIST-1 | ![Vecinos OSPF en DIST-1](../capturas/F2/verificacionOSPF-DIST1.png) |
+| DIST-2 | ![Vecinos OSPF en DIST-2](../capturas/F2/verificacionOSPF-DIST2.png) |
+
+#### 3.2.4 Verificación de la tabla de ruteo
+
+Se consultaron las rutas aprendidas por OSPF con `/ip route print where ospf`. En EDGE se observan las loopbacks de CORE-1, CORE-2, DIST-1 y DIST-2, los enlaces core–core y dist–core y las LAN `192.168.10.0/24` y `192.168.20.0/24`, todas con distancia administrativa `110`.
+
+Las LAN y las loopbacks de distribución aparecen **dos veces**, una por `ether11` (vía CORE-1, gateway `10.255.0.10`) y otra por `ether12` (vía CORE-2, gateway `10.255.0.14`). Ambas están activas con la marca `+` de ECMP, es decir que EDGE reparte el tráfico entre los dos routers de core y conserva una ruta si el otro falla. Es la redundancia que se va a poner a prueba en los drills de la Fase 4.
+
+*Evidencia: tablas de ruteo*
+
+![Rutas OSPF en EDGE](../capturas/F2/verificacionTablaDeRuteo-EDGE.png)
+![Rutas OSPF en CORE-1](../capturas/F2/verificacionTablaDeRuteo-CORE1.png)
+![Rutas OSPF en CORE-2](../capturas/F2/verificacionTablaDeRuteo-CORE2.png)
+
+#### 3.2.5 Resultado de la implementación
+
+OSPF área 0 quedó operativo en los cinco routers, con adyacencias `Full` en todos los enlaces, incluido el enlace core–core, y con autenticación MD5 activa. Cada router conoce los prefijos del resto del dominio y EDGE dispone de caminos redundantes hacia las LAN a través de ambos routers de core.
+
+Con esto se habilita la verificación de conectividad de capa 3 entre hosts y la integración con BGP en EDGE, correspondientes a las actividades siguientes de las Fases 2 y 3.
+
+Observación para la revisión: las interfaces `vlan10` y `vlan20` de DIST-1 y DIST-2 están en OSPF como interfaces activas, por eso los dos routers forman una adyacencia entre sí por las LAN. No afecta el funcionamiento, pero se podría reducir con `passive=yes` en esas interfaces si se prefiere que las LAN solo se anuncien y no formen vecindades.
 
 ## 4. Implementacion de BGP + firewall
 ### 4.1 eBGP Multi-homing
