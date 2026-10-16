@@ -575,41 +575,88 @@ El commit `ops(backup): agrega respaldos rsc, evidencias de conectividad y harde
 ![Export y backup por router](../capturas/F1/exportYBackupPorRouter.png)
 
 
+## 3.Configuracion
+### 3.1 Desarrollo de VRRP
+
+El objetivo de esta parte corresponde a implementar un mecanismo de redundancia de capa 3 mediante Virtual Router Redundancy Protocol (VRRP) en los routers DIST-1 y DIST-2. 
+
+Esta configuracion nos permite proporcionar gateways virtuales para las redes de usuarios y servidores, manteniendo asi la disponibilidad del servicio ante la pérdida del router, el cual desempeña el rol principal.
+
+Adicionalmente, tambien se busco distribuir el rol de Master entre ambos routers para asi implementar un esquema de load-sharing, evitando que un único dispositivo asumiera permanentemente la responsabilidad principal sobre ambas redes.
+
+#### 3.1.1 Configuracion de los grupos VRRP
+
+Se configuraron dos grupos VRRP, identificados mediante los valores VRID 10 y VRID 20. Cada grupo nos proporciona una dirección IP virtual que los equipos finales utilizan como gateway predeterminado.
+
+La distribución de los roles se estableció de la siguiente manera:
+
+| Grupo VRRP | Red asociada | Gateway virtual | Router Master | Router Backup |
+|---|---|---|---|---|
+| VRID 10 | LAN de usuarios | 192.168.10.1 | DIST-1 | DIST-2 |
+| VRID 20 | LAN de servidores | 192.168.20.1 | DIST-2 | DIST-1 |
+
+Para determinar que router asumiria el rol de Master en cada grupo, se decidio por desarrollar prioridades diferenciadas al momento de decidir.
+
+- DIST-1 recibio un prioridad superior en el grupo VRID 10
+- DIST-2 recibio un prioridad superior en el grupo VRID 20
+
+De esta forma, ambos routers participan en la provisión de los gateways virtuales y mantienen una función de respaldo para la otra red. Si surge el caso de que el router Master de un grupo deja de estar disponible, el router Backup puede asumir ese rol, sujeto a las condiciones de funcionamiento de VRRP y a la conectividad del entorno.
+
+#### 3.1.2 Verificación del estado operativo de VRRP
+
+Una vez que finalizo la configuracion, se verifico el estado de las interfaces VRRP en ambos routers mediante los comandos de consulta de RouterOS. En donde, se comprobó que la distribución de roles coincidiera con el esquema previsto para el laboratorio.
+
+En donde se espera que DIST-1 se encuentre en estado Master para VRID 10 y Backup para el VRID 20, mientras que DIST-2 presente la distribucion inversa.
+
+*Evidencia de configuración en DIST-1*
+
+![Configuración en DIST-1](../capturas/F2/configVRRP-DIST1.png)
+
+*Evidencia de configuración en DIST-2*
+
+![Configuración en DIST-2](../capturas/F2/configVRRP-DIST2.png)
+
+#### 3.1.3 Resultado de la implementacion 
+Con la configuración de VRRP se establecen dos gateways virtuales redundantes para las LAN de usuarios y servidores. La distribución de los roles Master entre DIST-1 y DIST-2 nos permite implementar el esquema de load-sharing definido para la fase, mientras que la presencia de un router Backup en cada grupo tambien nos proporciona la capacidad de asumir el gateway ante una falla del Master.
+
+Gracias a esta implementación se establece la base de redundancia de capa 3 requerida para continuar con las verificaciones de conectividad y con la integración del enrutamiento dinámico mediante OSPF, correspondiente a las siguientes actividades de la Fase 2.
 
 
+## 4. Implementacion de BGP + firewall
+### 4.1 eBGP Multi-homing
+El objetivo de esta etapa corresponde a implementar conectividad mediante el protocolo eBGP entre el router EDGE y los dos proveedores de servicios de internet, ISP-1 e ISP-2
 
+Esta configuracion nos permite que EDGE establezca sesiones BGP independientes con ambos proveedores, proporcionando asi una arquitectura con multiples conexiones externas. Asimismo, tambien nos permite preparar la infraestructura para anunciar las redes internas hacia los ISP y disponer de información de enrutamiento intercambiada mediante BGP.
 
+#### 4.1.1 Configuracion de eBGP en EDGE
+Para comenzar, en el router EDGE se configuraron las conexiones BGP correspondientes a ISP-1 e ISP-2. Para ello, se definieron los parámetros necesarios para identificar cada vecino.
 
+Ademas, tambien se configuro la autenticacion TCP-MD5 para proteger el establecimiento de las sesiones BGP mediante una clave compartida entre cada par de vecinos.
 
+![Configuracion de eBGP en EDGE](../capturas/F3/configuracionBGP-EDGE.png)
 
+#### 4.1.2 Configuración de eBGP en ISP-1 e ISP-2
+Seguido de esto, en los routers ISP-1 e ISP-2 se configuraron las conexiones BGP hacia EDGE, utilizando los parámetros de vecindad correspondientes y las mismas claves TCP-MD5 definidas en el extremo remoto para cada enlace.
 
+![Aplicacion de clave TCP-MD5 Foto1](../capturas/F3/wrongPasswordTCP-MD5.png)
+![Aplicacion de clave TCP-MD5 Foto2](../capturas/F3/wrongPasswordTCP-MD5-2.png)
+![Aplicacion de clave TCP-MD5 Foto3](../capturas/F3/wrongPasswordTCP-MD5-3.png)
 
+Ademas, tambien se configuro la opcion de anuncio de la ruta por defecto según los requisitos de la práctica, con el propósito de permitir que EDGE pudiera recibir una ruta por defecto desde los proveedores. La disponibilidad efectiva de esta ruta depende de la configuración aplicada y de la política de anuncios de cada ISP.
 
+![Configuracion de eBGP en ISP-1](../capturas/F3/configuracionBGP-ISP1.png)
+*Configuracion de eBGP en ISP-1*
 
+![Configuracion de eBGP en ISP-2](../capturas/F3/configuracionBGP-ISP2.png)
+*Configuracion de eBGP en ISP-1*
 
+#### 4.1.3 Verificación de las sesiones BGP
+Una vez finalizada la configuración, se verificó el estado de las sesiones BGP en EDGE.
+Lo cual se realizo a partir de ejecutar `/routing/bgp/session/print`, en donde se verifico que el estado Established sea indicado en la sesión BGP establecida y que los vecinos pueden intercambiar información de enrutamiento. Se verificó que tanto ISP-1 como ISP-2 alcanzaran dicho estado, de acuerdo con el criterio de aceptación definido para esta fase.
 
+![Certificación de las sesiones eBGP en EDGE.](../capturas/F3/estadoFinalEDGE_A.png)
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+Comprobando asi que el estado de las sesiones con ambos proveedores.
 
 ### 4.2 Redistribución OSPF -> BGP en EDGE
 Segun la configuracion de enrutamiento interno implementada en F2, se configuro en EDGE el mecanimso de redistribucion de rutas OSPF hacia BGP.
