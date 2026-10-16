@@ -19,9 +19,6 @@ add address=192.168.1.1/24 interface=*2 network=192.168.1.0
 add address=192.168.2.1/24 interface=*3 network=192.168.2.0
 add address=10.255.0.2/30 interface=ether9 network=10.255.0.0
 add address=1.1.1.1 interface=lo network=1.1.1.1
-/ip dhcp-client
-# Interface not active
-add interface=*2
 /ip service
 set ftp disabled=yes
 set telnet disabled=yes

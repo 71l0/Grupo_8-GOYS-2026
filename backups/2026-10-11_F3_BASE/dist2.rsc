@@ -34,9 +34,6 @@ add address=192.168.20.3/24 interface=vlan20 network=192.168.20.0
 add address=7.7.7.7 interface=lo network=7.7.7.7
 add address=192.168.10.1 interface=vrrp-users network=192.168.10.1
 add address=192.168.20.1 interface=vrrp-servers network=192.168.20.1
-/ip dhcp-client
-# Interface not active
-add interface=*2
 /ip service
 set ftp disabled=yes
 set telnet disabled=yes
