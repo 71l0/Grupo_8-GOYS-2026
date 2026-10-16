@@ -98,11 +98,11 @@ Formato de tarea: `- [ ] descripción (Rol)`
 
 ### Feature: OSPF área 0
 *Criterio: adyacencias FULL edge↔core↔dist (incluido core–core), con MD5.*
-- [ ] Configurar OSPF en CORE-1 y CORE-2, incluido el enlace core–core (R3)
-- [ ] Configurar OSPF en DIST-1 y DIST-2 (R4)
-- [ ] Configurar OSPF en EDGE hacia el core (R1)
-- [ ] Activar MD5 en todas las interfaces OSPF (R3)
-- [ ] Verificar adyacencias FULL con `/routing ospf neighbor print` (R5)
+- [ x ] Configurar OSPF en CORE-1 y CORE-2, incluido el enlace core–core (R3)
+- [ x ] Configurar OSPF en DIST-1 y DIST-2 (R4)
+- [ x ] Configurar OSPF en EDGE hacia el core (R1)
+- [ x ] Activar MD5 en todas las interfaces OSPF (R3)
+- [ x ] Verificar adyacencias FULL con `/routing ospf neighbor print` (R5)
 
 ### Feature: Verificación L3
 *Criterio: ping intra-LAN + gateway virtual responde.*
