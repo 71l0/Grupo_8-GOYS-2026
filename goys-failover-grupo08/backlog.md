@@ -91,10 +91,10 @@ Formato de tarea: `- [ ] descripción (Rol)`
 
 ### Feature: VRRP
 *Criterio: 2 grupos (10/20) operativos con load-sharing (DIST-1 master 10, DIST-2 master 20), con auth.*
-- [ ] Configurar VRRP vrid 10 en DIST-1 (master) y DIST-2 (backup) (R4)
-- [ ] Configurar VRRP vrid 20 en DIST-2 (master) y DIST-1 (backup) (R4)
-- [ ] Activar auth en ambos grupos (R4)
-- [ ] Verificar master/backup con `/interface vrrp print` (R5)
+- [ x ] Configurar VRRP vrid 10 en DIST-1 (master) y DIST-2 (backup) (R4)
+- [ x ] Configurar VRRP vrid 20 en DIST-2 (master) y DIST-1 (backup) (R4)
+- [ x ] Activar auth en ambos grupos (R4)
+- [ x ] Verificar master/backup con `/interface vrrp print` (R5)
 
 ### Feature: OSPF área 0
 *Criterio: adyacencias FULL edge↔core↔dist (incluido core–core), con MD5.*
