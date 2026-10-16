@@ -733,4 +733,51 @@ Entre F2 y F3 cambiaron EDGE, ISP-1 e ISP-2. CORE-1, CORE-2, DIST-1 y DIST-2 no 
 **Nota sobre las fechas:** los `.rsc` de F2 y F3 llevan fecha de exportación del 11/10 (el nombre de la carpeta de F3 también). El commit de F2 es del 11/10 y el de F3 del 14/10, por lo que las filas de F3 usan la fecha del export para el cambio y la del commit para el backup.
 
 **Pendiente de registrar:** los cambios de F1 (despliegue, direccionamiento, hardening y backup inicial) no figuran todavía en este change log.
+### 4.3 Salida a "Internet"
+
+El objetivo de esta etapa es comprobar que los hosts de la red interna alcanzan el "Internet" simulado por el laboratorio, representado por las loopbacks de los proveedores (`1.1.1.1` en ISP-1 y `2.2.2.2` en ISP-2), y que la información de salida se propaga correctamente por el dominio OSPF.
+
+#### 4.3.1 Ruta por defecto en EDGE y propagación por OSPF
+
+Para que los routers internos sepan hacia dónde enviar el tráfico externo, EDGE origina una ruta por defecto dentro de OSPF. En la instancia OSPF de EDGE se configuró `originate-default=always`, por lo que la ruta `0.0.0.0/0` se anuncia al área 0 de forma permanente.
+
+![Instancia OSPF de EDGE con originate-default=always](../capturas/F3/estadoFinalEDGE_B.png)
+
+Se verificó la propagación en el resto de los routers con `/ip route print`:
+
+| Router | Ruta `0.0.0.0/0` | Gateway | Distancia |
+|---|---|---|---|
+| CORE-1 | Aprendida por OSPF | `10.255.0.9` (EDGE, `ether9`) | `110` |
+| DIST-1 | Aprendida por OSPF, 2 caminos (ECMP) | `10.255.0.21` (CORE-1, `ether9`) y `10.255.0.29` (CORE-2, `ether10`) | `110` |
+
+CORE-1 llega a la salida directamente por EDGE, y DIST-1 reparte el tráfico entre ambos routers de core. Con esto la ruta por defecto queda disponible hasta la capa de distribución, y los hosts la alcanzan a través del gateway virtual VRRP.
+
+![Tabla de ruteo de CORE-1](../capturas/F3/estadoFinalCORE1.png)
+
+![Tabla de ruteo de DIST-1](../capturas/F3/estadoFinalDIST1.png)
+
+**Observación sobre la ruta recibida de los ISP:** en la tabla de ruteo de EDGE no figura una ruta `0.0.0.0/0` aprendida por BGP. Las sesiones con ISP-1 e ISP-2 están en estado `Established` y cada una intercambia 2 prefijos (la loopback del proveedor y el enlace), pero ninguno es una ruta por defecto. En EDGE, las rutas hacia los ISP son específicas: `1.1.1.1/32` vía `10.255.0.2` y `2.2.2.2/32` vía `10.255.0.6`, ambas con distancia `20` (eBGP). La default que ven los routers internos es, entonces, la que origina el propio EDGE en OSPF y no una recibida de los proveedores.
+
+![Sesiones BGP y tabla de ruteo de EDGE](../capturas/F3/estadoFinalEDGE_A.png)
+
+#### 4.3.2 Prueba de alcance a las loopbacks de los ISP
+
+Desde PC-USER (`192.168.10.100`) se ejecutó `ping` a la loopback de cada proveedor:
+
+| Origen | Destino | Resultado |
+|---|---|---|
+| PC-USER | `1.1.1.1` (ISP-1) | 3 enviados, 3 recibidos, 0 % de pérdida, TTL 61 |
+| PC-USER | `2.2.2.2` (ISP-2) | 3 enviados, 3 recibidos, 0 % de pérdida, TTL 61 |
+
+El TTL de 61 corresponde a tres saltos de router (DIST, CORE y EDGE) desde el valor inicial de 64, coherente con el camino `PC-USER → DIST → CORE → EDGE → ISP`.
+
+![Ping desde PC-USER a las loopbacks de ISP-1 e ISP-2](../capturas/F3/verificacionFinalPingueoALoopbacksDesdePC-USER.png)
+
+El camino de ida usa la default de OSPF hasta EDGE, y desde EDGE las rutas específicas de BGP hacia cada ISP. La respuesta vuelve porque los ISP conocen las LAN internas por la redistribución OSPF → BGP (sección 4.2) y porque EDGE aplica NAT `masquerade` en `ether9` y `ether10`.
+
+#### 4.3.3 Resultado de la fase
+
+El criterio de aceptación se cumple: un host de la red interna alcanza la loopback de ISP-1 y la de ISP-2. EDGE origina la ruta por defecto hacia el dominio OSPF y esta llega a CORE-1, CORE-2 y a la capa de distribución.
+
+Queda como punto a tener en cuenta para la revisión que la salida funciona porque EDGE tiene rutas específicas hacia las loopbacks de los ISP y origina la default con `always`. La default no depende de que los ISP la anuncien por BGP, de modo que el alcance a destinos que no sean esas loopbacks no está probado en este laboratorio.
 
