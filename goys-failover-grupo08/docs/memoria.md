@@ -908,7 +908,24 @@ El acceso de gestion a EDGE queda protegido desde los enlaces WAN: cualquier con
 
 Esto se complementa con el hardening aplicado en F1 (seccion 2.3), donde se deshabilitaron `ftp`, `telnet`, `www`, `www-ssl`, `api` y `api-ssl`, dejando solo `ssh` y `winbox` como servicios de gestion.
 
-#### 4.4.4 Resultado de la implementación
+#### 4.4.4 Prueba de las reglas
+
+Para comprobar el funcionamiento del firewall se verifico que las reglas esten cargadas y activas, y que el trafico permitido siga pasando por EDGE con el filtro aplicado.
+
+| Prueba | Regla involucrada | Resultado | Evidencia |
+|---|---|---|---|
+| Reglas cargadas y activas | Cadenas `input` y `forward` | Las 12 reglas figuran en `/ip firewall filter print` sin la marca `X` (deshabilitada) | `estadoFinalEDGE_C.png` |
+| NAT hacia los ISP | `srcnat masquerade` en `ether9` y `ether10` | Configurado en ambos enlaces WAN | `estadoFinalEDGE_C.png` |
+| Salida de las LAN hacia "Internet" | `forward` regla 2 (`src-address=192.168.0.0/16`) | PC-USER alcanza `1.1.1.1` y `2.2.2.2` (0 % de pérdida) | `verificacionFinalPingueoALoopbacksDesdePC-USER.png` (sección 4.3.2) |
+| Sesiones BGP con los ISP | `input` regla 1 (`established,related`) | Sesiones con ISP-1 e ISP-2 en estado `Established` | `estadoFinalEDGE_A.png` (sección 4.1.3) |
+| Adyacencias OSPF de EDGE | `input` regla 2 (`protocol=ospf`) | Adyacencias con CORE-1 y CORE-2 operativas | Sección 3.2.3 |
+
+![Reglas del firewall y NAT activas en EDGE](../capturas/F3/estadoFinalEDGE_C.png)
+*Estado final de `/ip firewall filter` y `/ip firewall nat` en EDGE*
+
+Con esto se comprueba que el filtro no interrumpe el trafico necesario para la red. Queda pendiente agregar la evidencia de una prueba de bloqueo, por ejemplo un intento de conexion SSH a EDGE desde ISP-1 que no responda, para mostrar las reglas de drop en funcionamiento.
+
+#### 4.4.5 Resultado de la implementación
 
 Con esta configuracion EDGE cuenta con un filtro de entrada que acepta el trafico establecido, OSPF e ICMP, y bloquea el trafico no solicitado desde ambos ISP, tanto hacia el router como a traves de el. La salida de las LAN hacia los proveedores sigue funcionando, como se comprobo en la seccion 4.3.
 
