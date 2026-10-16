@@ -738,6 +738,22 @@ En ambos casos el gateway virtual responde, por lo que los hosts tienen salida h
 
 ![Ping al gateway virtual desde PC-SERVER](../capturas/F2/pingGatewayVirtualDesdePC-SERVER.png)
 
+#### 3.3.2 Ping entre hosts de distintas LAN
+
+Luego se comprobo la comunicacion entre las dos redes, ejecutando `ping` desde PC-USER hacia PC-SERVER.
+
+| Origen | Destino | Resultado |
+|---|---|---|
+| PC-USER (`192.168.10.100`) | PC-SERVER (`192.168.20.100`) | 3 enviados, 3 recibidos, 0 % de pérdida, TTL 63 |
+
+El TTL de 63 corresponde a un salto de router desde el valor inicial de 64, ya que el trafico pasa de la LAN de usuarios a la de servidores a traves de la capa de distribucion.
+
+![Ping entre PC-USER y PC-SERVER](../capturas/F2/pingPC-USER-PC-SERVER.png)
+
+#### 3.3.3 Resultado de la verificación
+
+El criterio de aceptación se cumple: los dos hosts alcanzan su gateway virtual y existe conectividad entre las LAN de usuarios y servidores. Con esto queda comprobado el funcionamiento conjunto de VRRP y OSPF definido para la Fase 2.
+
 ## 4. Implementacion de BGP + firewall
 ### 4.1 eBGP Multi-homing
 El objetivo de esta etapa corresponde a implementar conectividad mediante el protocolo eBGP entre el router EDGE y los dos proveedores de servicios de internet, ISP-1 e ISP-2
