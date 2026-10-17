@@ -1,0 +1,49 @@
+# 2026-10-17 16:41:58 by RouterOS 7.21.5
+# system id = 79OG2z+wVBK
+#
+/interface ethernet
+set [ find default-name=ether1 ] disable-running-check=no name=ether9
+set [ find default-name=ether2 ] disable-running-check=no name=ether10
+set [ find default-name=ether3 ] disable-running-check=no name=ether11
+set [ find default-name=ether4 ] disable-running-check=no name=ether12
+/routing bgp instance
+add as=65001 name=default router-id=1.1.1.1
+/routing bgp template
+add name=ebgp-edge routing-table=main
+/snmp community
+set [ find default=yes ] disabled=yes
+add addresses=192.168.0.0/16 name=goys2026-mon
+/user group
+add name=monitor policy=ssh,read,test,winbox,!local,!telnet,!ftp,!reboot,!write,!policy,!password,!web,!sniff,!sensitive,!api,!romon,!rest-api
+/ip neighbor discovery-settings
+set discover-interface-list=none
+/ip settings
+set max-neighbor-entries=12288
+/ipv6 settings
+set max-neighbor-entries=6144 min-neighbor-entries=1536 soft-max-neighbor-entries=3072
+/ip address
+add address=192.168.1.1/24 interface=*2 network=192.168.1.0
+add address=192.168.2.1/24 interface=*3 network=192.168.2.0
+add address=10.255.0.2/30 interface=ether9 network=10.255.0.0
+add address=1.1.1.1 interface=lo network=1.1.1.1
+add address=8.8.8.8 interface=lo network=8.8.8.8
+/ip service
+set ftp disabled=yes
+set telnet disabled=yes
+set www disabled=yes
+set api disabled=yes
+set api-ssl disabled=yes
+/ip ssh
+set strong-crypto=yes
+/routing bgp connection
+add instance=default local.role=ebgp name=bgp-edge output.redistribute=connected remote.address=10.255.0.1/32 .as=65000 templates=ebgp-edge
+/snmp
+set contact=Grupo08-GOYS enabled=yes location=GNS3-Lab
+/system identity
+set name=ISP-1
+/tool bandwidth-server
+set enabled=no
+/tool mac-server
+set allowed-interface-list=none
+/tool mac-server mac-winbox
+set allowed-interface-list=none

@@ -1,4 +1,4 @@
-# 2026-10-11 22:21:39 by RouterOS 7.21.5
+# 2026-10-17 16:46:29 by RouterOS 7.21.5
 # system id = ArGi4SUGx4B
 #
 /interface ethernet
@@ -16,6 +16,9 @@ add hold-time=1m30s keepalive-time=30s name=ebgp-peers routing-table=main
 add name=ospf-instance-1 originate-default=always router-id=3.3.3.3
 /routing ospf area
 add instance=ospf-instance-1 name=backbone-area
+/snmp community
+set [ find default=yes ] disabled=yes
+add addresses=192.168.0.0/16 name=goys2026-mon
 /user group
 add name=monitor policy=ssh,read,test,winbox,!local,!telnet,!ftp,!reboot,!write,!policy,!password,!web,!sniff,!sensitive,!api,!romon,!rest-api
 /ip neighbor discovery-settings
@@ -60,12 +63,14 @@ set api-ssl disabled=yes
 /ip ssh
 set strong-crypto=yes
 /routing bgp connection
-add instance=default local.role=ebgp name=bgp-isp1 output.filter-chain=bgp-out-filter .redistribute=ospf remote.address=10.255.0.2/32 .as=65001 templates=ebgp-peers
+add disabled=no instance=default local.role=ebgp name=bgp-isp1 output.filter-chain=bgp-out-filter .redistribute=ospf remote.address=10.255.0.2/32 .as=65001 templates=ebgp-peers
 add instance=default local.role=ebgp name=bgp-isp2 output.filter-chain=bgp-out-filter .redistribute=ospf remote.address=10.255.0.6/32 .as=65002 templates=ebgp-peers
 /routing filter rule
 add chain=bgp-out-filter rule="if (dst in 192.168.0.0/16) { accept }"
 /routing ospf interface-template
 add area=backbone-area auth=md5 auth-id=1 interfaces=ether11,ether12,lo
+/snmp
+set contact=Grupo08-GOYS enabled=yes location=GNS3-Lab
 /system identity
 set name=EDGE
 /tool bandwidth-server

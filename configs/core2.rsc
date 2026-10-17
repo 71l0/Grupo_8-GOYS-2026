@@ -1,4 +1,4 @@
-# 2026-10-11 22:22:55 by RouterOS 7.21.5
+# 2026-10-17 16:48:48 by RouterOS 7.21.5
 # system id = VRZJNLP2IEH
 #
 /interface ethernet
@@ -10,6 +10,9 @@ set [ find default-name=ether4 ] disable-running-check=no name=ether12
 add name=ospf-instance-1 router-id=5.5.5.5
 /routing ospf area
 add instance=ospf-instance-1 name=backbone-area
+/snmp community
+set [ find default=yes ] disabled=yes
+add addresses=192.168.0.0/16 name=goys2026-mon
 /user group
 add name=monitor policy=ssh,read,test,winbox,!local,!telnet,!ftp,!reboot,!write,!policy,!password,!web,!sniff,!sensitive,!api,!romon,!rest-api
 /ip neighbor discovery-settings
@@ -36,6 +39,8 @@ set api-ssl disabled=yes
 set strong-crypto=yes
 /routing ospf interface-template
 add area=backbone-area auth=md5 auth-id=1 interfaces=ether9,ether10,ether11,ether12,lo
+/snmp
+set contact=Grupo08-GOYS enabled=yes location=GNS3-Lab
 /system identity
 set name=CORE-2
 /tool bandwidth-server
