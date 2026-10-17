@@ -1,9 +1,9 @@
-# 2026-10-11 22:24:00 by RouterOS 7.21.5
+# 2026-10-17 16:50:39 by RouterOS 7.21.5
 # system id = kzKYW7eIQ5J
 #
 /interface ethernet
-set [ find default-name=ether1 ] disable-running-check=no name=ether9
-set [ find default-name=ether2 ] disable-running-check=no name=ether10
+set [ find default-name=ether2 ] disable-running-check=no name=ether9
+set [ find default-name=ether1 ] disable-running-check=no name=ether10
 set [ find default-name=ether3 ] disable-running-check=no name=ether11
 set [ find default-name=ether4 ] disable-running-check=no name=ether12
 /interface vlan
@@ -16,6 +16,9 @@ add authentication=simple interface=vlan10 name=vrrp-users version=2 vrid=10
 add name=ospf-instance-1 router-id=7.7.7.7
 /routing ospf area
 add instance=ospf-instance-1 name=backbone-area
+/snmp community
+set [ find default=yes ] disabled=yes
+add addresses=192.168.0.0/16 name=goys2026-mon
 /user group
 add name=monitor policy=ssh,read,test,winbox,!local,!telnet,!ftp,!reboot,!write,!policy,!password,!web,!sniff,!sensitive,!api,!romon,!rest-api
 /ip neighbor discovery-settings
@@ -44,6 +47,8 @@ set api-ssl disabled=yes
 set strong-crypto=yes
 /routing ospf interface-template
 add area=backbone-area auth=md5 auth-id=1 interfaces=ether9,ether10,vlan10,vlan20,lo
+/snmp
+set contact=Grupo08-GOYS enabled=yes location=GNS3-Lab
 /system identity
 set name=DIST-2
 /tool bandwidth-server
