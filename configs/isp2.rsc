@@ -1,4 +1,4 @@
-# 2026-10-11 22:21:04 by RouterOS 7.21.5
+# 2026-10-17 16:45:26 by RouterOS 7.21.5
 # system id = jzT+RnJwg8M
 #
 /interface ethernet
@@ -10,6 +10,9 @@ set [ find default-name=ether4 ] disable-running-check=no name=ether12
 add as=65002 name=default router-id=2.2.2.2
 /routing bgp template
 add name=ebgp-edge routing-table=main
+/snmp community
+set [ find default=yes ] disabled=yes
+add addresses=192.168.0.0/16 name=goys2026-mon
 /user group
 add name=monitor policy=ssh,read,test,winbox,!local,!telnet,!ftp,!reboot,!write,!policy,!password,!web,!sniff,!sensitive,!api,!romon,!rest-api
 /ip neighbor discovery-settings
@@ -23,6 +26,7 @@ add address=192.168.1.1/24 interface=*2 network=192.168.1.0
 add address=192.168.2.1/24 interface=*3 network=192.168.2.0
 add address=10.255.0.6/30 interface=ether9 network=10.255.0.4
 add address=2.2.2.2 interface=lo network=2.2.2.2
+add address=8.8.8.8 interface=lo network=8.8.8.8
 /ip service
 set ftp disabled=yes
 set telnet disabled=yes
@@ -33,6 +37,8 @@ set api-ssl disabled=yes
 set strong-crypto=yes
 /routing bgp connection
 add instance=default local.role=ebgp name=bgp-edge output.redistribute=connected remote.address=10.255.0.5/32 .as=65000 templates=ebgp-edge
+/snmp
+set contact=Grupo08-GOYS enabled=yes location=GNS3-Lab
 /system identity
 set name=ISP-2
 /tool bandwidth-server
