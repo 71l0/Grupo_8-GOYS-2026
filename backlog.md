@@ -158,7 +158,7 @@ Formato de tarea: `- [ ] descripción (Rol)`
 - [ x ] Drill 2 — Caída de un enlace dist–core (R3 ejecuta, R5 mide)
 - [ x ] Drill 3 — Caída de un nodo CORE / enlace core–core (R3 ejecuta, R5 mide)
 - [ x ] Drill 4 — Caída de un ISP (R1 ejecuta, R5 mide)
-- [ x ] Drill 5 — Falla combinada o del segundo ISP (R2 ejecuta, R5 mide)
+- [ x] Drill 5 — Falla combinada o del segundo ISP (R2 ejecuta, R5 mide)
 - [ x ] Escribir un runbook en donde se desarrollen los drill en `runbooks/` (R5)
 - [ x ] Escribir post-mortem y tiempos medidos de cada drill (R5)
 - [ x ] Capturas organizadas por drill en `capturas/` (R5)
