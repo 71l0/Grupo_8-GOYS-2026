@@ -1004,7 +1004,7 @@ La consigna exige comprobar que una adyacencia o sesión con clave incorrecta **
 | Control | Rol | Estado | Evidencia |
 |---|---|---|---|
 | BGP con clave TCP-MD5 incorrecta → la sesión **no** llega a `established` | R1/R2 | ✅ verificado en F3 | Sección 5.1 |
-| OSPF con clave MD5 incorrecta → la adyacencia **no** llega a FULL | R3 | ⏳ pendiente F4 | — |
+| OSPF con clave MD5 incorrecta → la adyacencia **no** llega a FULL | R3 | ✅ verificado en F4 | Sección 5.2 |
 | VRRP con auth incorrecta → ambos routers pasan a master | R4 | ⏳ pendiente F4 | — |
 
 ### 5.1 BGP con clave TCP-MD5 incorrecta (F3)
@@ -1023,7 +1023,25 @@ Con ambas sesiones en estado `Established`, se cargó en ISP-1 una clave distint
 
    ![Sesión BGP con ISP-1 restablecida tras corregir la clave](../capturas/F3/wrongPasswordTCP-MD5-3.png)
 
-**Resultado:** el criterio "sesión con clave incorrecta FALLA" queda cumplido para BGP: TCP-MD5 valida la clave durante el handshake y una clave incorrecta impide que la sesión llegue a `established`. Las pruebas de OSPF MD5 y VRRP auth se ejecutan en F4 (runbook correspondiente) y se documentan en esta sección.
+**Resultado:** el criterio "sesión con clave incorrecta FALLA" queda cumplido para BGP: TCP-MD5 valida la clave durante el handshake y una clave incorrecta impide que la sesión llegue a `established`.
+
+### 5.2 OSPF con clave MD5 incorrecta (F4)
+
+Para verificar que OSPF v2 valida la firma criptográfica en cada paquete Hello y LSU, se modificó en CORE-1 la clave MD5 configurada en el interface template del área backbone por una clave errónea:
+
+1. **Clave MD5 incorrecta cargada en CORE-1:** se ejecutó `/routing ospf interface-template set [find] auth-key="CLAVE_ERRONEA_123"`.
+
+   ![Carga de clave MD5 errónea en CORE-1](../capturas/F4/OSPFconClaveMD5Incorrecta.png)
+
+2. **Caída de adyacencias en CORE-1:** al no coincidir el hash MD5 con los routers vecinos (EDGE, CORE-2, DIST-1 y DIST-2), los paquetes Hello son descartados. Al cumplirse el `dead-interval`, todas las adyacencias caen y `/routing ospf neighbor print` queda completamente vacío.
+
+   ![Vecinos OSPF caídos en CORE-1](../capturas/F4/OSPFconClaveMD5Incorrecta-2.png)
+
+3. **Restauración de la clave legítima y reconvergencia:** al restituir la clave legítima compartida en CORE-1, los vecinos renegocian el saludo pasando por los estados transitorios `Init` y `ExStart`, hasta alcanzar nuevamente el estado `Full` en las 4 adyacencias (`3.3.3.3` EDGE, `5.5.5.5` CORE-2, `6.6.6.6` DIST-1 y `7.7.7.7` DIST-2).
+
+   ![Restablecimiento de adyacencias OSPF a estado Full](../capturas/F4/OSPFconClaveMD5Incorrecta-3.png)
+
+**Resultado:** se comprueba que ante una discrepancia en la clave MD5, la adyacencia OSPF no se establece ni se mantiene, protegiendo al área 0 contra inyección o alteración de rutas por nodos no autorizados.
 
 ---
 
