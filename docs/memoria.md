@@ -1004,8 +1004,8 @@ La consigna exige comprobar que una adyacencia o sesión con clave incorrecta **
 | Control | Rol | Estado | Evidencia |
 |---|---|---|---|
 | BGP con clave TCP-MD5 incorrecta → la sesión **no** llega a `established` | R1/R2 | ✅ verificado en F3 | Sección 5.1 |
-| OSPF con clave MD5 incorrecta → la adyacencia **no** llega a FULL | R3 | ⏳ pendiente F4 | — |
-| VRRP con auth incorrecta → ambos routers pasan a master | R4 | ⏳ pendiente F4 | — |
+| OSPF con clave MD5 incorrecta → la adyacencia **no** llega a FULL | R3 | ✅ verificado en F4 | Sección 5.2 |
+| VRRP con auth incorrecta → ambos routers pasan a master | R4 | ✅ verificado en F4 | Sección 5.3 |
 
 ### 5.1 BGP con clave TCP-MD5 incorrecta (F3)
 
@@ -1023,7 +1023,46 @@ Con ambas sesiones en estado `Established`, se cargó en ISP-1 una clave distint
 
    ![Sesión BGP con ISP-1 restablecida tras corregir la clave](../capturas/F3/wrongPasswordTCP-MD5-3.png)
 
-**Resultado:** el criterio "sesión con clave incorrecta FALLA" queda cumplido para BGP: TCP-MD5 valida la clave durante el handshake y una clave incorrecta impide que la sesión llegue a `established`. Las pruebas de OSPF MD5 y VRRP auth se ejecutan en F4 (runbook correspondiente) y se documentan en esta sección.
+**Resultado:** el criterio "sesión con clave incorrecta FALLA" queda cumplido para BGP: TCP-MD5 valida la clave durante el handshake y una clave incorrecta impide que la sesión llegue a `established`.
+
+### 5.2 OSPF con clave MD5 incorrecta (F4)
+
+Para verificar que OSPF v2 valida la firma criptográfica en cada paquete Hello y LSU, se modificó en CORE-1 la clave MD5 configurada en el interface template del área backbone por una clave errónea:
+
+1. **Clave MD5 incorrecta cargada en CORE-1:** se ejecutó `/routing ospf interface-template set [find] auth-key="CLAVE_ERRONEA_123"`.
+
+   ![Carga de clave MD5 errónea en CORE-1](../capturas/F4/OSPFconClaveMD5Incorrecta.png)
+
+2. **Caída de adyacencias en CORE-1:** al no coincidir el hash MD5 con los routers vecinos (EDGE, CORE-2, DIST-1 y DIST-2), los paquetes Hello son descartados. Al cumplirse el `dead-interval`, todas las adyacencias caen y `/routing ospf neighbor print` queda completamente vacío.
+
+   ![Vecinos OSPF caídos en CORE-1](../capturas/F4/OSPFconClaveMD5Incorrecta-2.png)
+
+3. **Restauración de la clave legítima y reconvergencia:** al restituir la clave legítima compartida en CORE-1, los vecinos renegocian el saludo pasando por los estados transitorios `Init` y `ExStart`, hasta alcanzar nuevamente el estado `Full` en las 4 adyacencias (`3.3.3.3` EDGE, `5.5.5.5` CORE-2, `6.6.6.6` DIST-1 y `7.7.7.7` DIST-2).
+
+   ![Restablecimiento de adyacencias OSPF a estado Full](../capturas/F4/OSPFconClaveMD5Incorrecta-3.png)
+
+**Resultado:** se comprueba que ante una discrepancia en la clave MD5, la adyacencia OSPF no se establece ni se mantiene, protegiendo al área 0 contra inyección o alteración de rutas por nodos no autorizados.
+
+### 5.3 VRRP con clave de autenticación incorrecta (F4)
+
+Para comprobar el mecanismo de autenticación en la redundancia de primer salto (RFC 5798 / RouterOS simple authentication), se manipuló la contraseña del grupo `vrrp-users` (VRID 10) en DIST-2:
+
+1. **Estado inicial y carga de password errónea en DIST-2:** inicialmente DIST-2 actúa como backup (`B`) del grupo `vrrp-users` (prioridad 100), mientras DIST-1 es el master (prioridad 150). En DIST-2 se alteró la clave de autenticación del grupo:
+   ```routeros
+   [admin@DIST-2] > /interface vrrp set [find vrid=10] password="WRONGPASS"
+   ```
+
+   ![Carga de clave VRRP errónea en DIST-2](../capturas/F4/VRRPconClaveIncorrecta.png)
+
+2. **Detección de falla de autenticación y doble master:** al recibir los anuncios VRRP de DIST-1 (`192.168.10.2`) con una clave distinta, DIST-2 descarta los paquetes e informa en consola `received packet from 192.168.10.2 simple authentication failed`. Como DIST-2 deja de computar los anuncios legítimos, asume que el master cayó tras expirar el temporizador y pasa también al estado `RM` (Running Master), originando un escenario de doble master (split-brain en el grupo).
+
+   ![Descarte por authentication failed y paso a doble master](../capturas/F4/VRRPconClaveIncorrecta-2.png)
+
+3. **Restauración de la clave legítima:** al restablecer la contraseña compartida en DIST-2, este vuelve a procesar los anuncios de DIST-1. Al detectar que DIST-1 anuncia prioridad 150 (superior a los 100 de DIST-2), este último cede inmediatamente el rol y regresa a estado `B` (backup).
+
+   ![Restablecimiento de DIST-2 a estado backup tras corregir la clave](../capturas/F4/VRRPconClaveIncorrecta-3.png)
+
+**Resultado:** se valida que ante una discrepancia de clave en VRRP, los anuncios son rechazados explícitamente (`simple authentication failed`). Esto previene que un equipo espía o mal configurado se incorpore al grupo VRRP o secuestre la VIP de la red.
 
 ---
 
@@ -1040,6 +1079,7 @@ Cada fila registra una intervención sobre los nodos con el formato definido en 
 | F1 | Proyecto GNS3 `topologia_failover_routing` recién importado (snapshot BASE de los nodos) | `backups/2026-10-08_F1_BASE/` |
 | F2 | `backups/2026-10-08_F1_BASE/` | `backups/2026-10-11_F2_BASE/` |
 | F3 | `backups/2026-10-11_F2_BASE/` | `backups/2026-10-11_F3_BASE/` |
+| F4 | `backups/2026-10-11_F3_BASE/` | `backups/2026-10-17_F4_BASE/` |
 
 #### 6.1.1 Fase 1: Topología + hardening + backup
 
@@ -1118,5 +1158,27 @@ Entre F2 y F3 cambiaron EDGE, ISP-1 e ISP-2. CORE-1, CORE-2, DIST-1 y DIST-2 no 
 
 | Fecha | Rol | Nodo | Cambio | Commit | Rollback |
 |---|---|---|---|---|---|
-| 2026-10-16 | R1–R4 | Los 7 routers | Remoción del `dhcp-client` de fábrica (`/ip dhcp-client remove [find]`) y saneado de los exports versionados en `backups/` (sección 2.5.2) | `docs(memoria): documenta correcciones 16/10` (asignar hash al commitear) | No aplica (el cliente estaba inactivo; reagregarlo es `/ip dhcp-client add interface=<iface>`) |
-| 2026-10-16 | R5 | ISP-1 | Prueba de restore: `/system reset-configuration no-defaults=yes` + `/system backup load name=F3_BASE.backup`, con verificación de la configuración restaurada (sección 2.5.1) | `docs(memoria): documenta correcciones 16/10` (asignar hash al commitear) | No aplica (es la prueba del procedimiento de recuperación) |
+| 2026-10-16 | R1–R4 | Los 7 routers | Remoción del `dhcp-client` de fábrica (`/ip dhcp-client remove [find]`) y saneado de los exports versionados en `backups/` (sección 2.5.2) | `ed21f61` | No aplica (el cliente estaba inactivo; reagregarlo es `/ip dhcp-client add interface=<iface>`) |
+| 2026-10-16 | R5 | ISP-1 | Prueba de restore: `/system reset-configuration no-defaults=yes` + `/system backup load name=F3_BASE.backup`, con verificación de la configuración restaurada (sección 2.5.1) | `ed21f61` | No aplica (es la prueba del procedimiento de recuperación) |
+
+#### 6.1.5 Fase 4: Drills + monitoreo
+
+Para la ejecución de los drills y las pruebas de monitoreo se aplicaron ajustes de servicio y laboratorio en los routers (versionados en `backups/2026-10-17_F4_BASE/` y en `configs/` bajo el commit `0fd4c0a`):
+
+1. **Habilitación de SNMP en los 7 routers:** comunidad `goys2026-mon` restringida a la red de gestión `192.168.0.0/16`, contacto `Grupo08-GOYS` y ubicación `GNS3-Lab` (`capturas/F4/monitoreoSNMP.png`).
+2. **Loopback 8.8.8.8/32 en ISP-1 e ISP-2:** IP de destino público agregada a la interfaz `lo` de ambos proveedores para validar salida dual-homed multi-proveedor eBGP.
+3. **Pruebas de seguridad de protocolo:** pruebas transitorias de claves erróneas en OSPF (CORE-1) y VRRP (DIST-2), documentadas en las secciones 5.2 y 5.3 con reversión inmediata.
+4. **Ejecución de los 5 drills de failover:** desconexiones programadas (VRRP en DIST-1, enlace DIST-CORE en CORE-1, enlace CORE-CORE en CORE-1, sesión eBGP con ISP-1 en EDGE, y falla combinada eBGP ISP-1 + enlace CORE-1 en EDGE), todas revertidas operativamente en el acto.
+
+| Fecha | Rol | Nodo | Cambio | Commit | Rollback |
+|---|---|---|---|---|---|
+| 2026-10-17 | R1–R4 | Los 7 routers | Habilitación de SNMP v2c: comunidad `goys2026-mon` (red `192.168.0.0/16`), comunidad `public` por defecto deshabilitada, `contact=Grupo08-GOYS`, `location=GNS3-Lab` | `0fd4c0a` | `/snmp set enabled=no` o restaurar `2026-10-11_F3_BASE/<router>.rsc` |
+| 2026-10-17 | R2 | ISP-1, ISP-2 | Agregado de loopback de servicio público `8.8.8.8/32` en interfaz `lo` para simulación de destino externo alcanzable por ambos ISP | `0fd4c0a` | `/ip address remove [find address="8.8.8.8/32"]` |
+| 2026-10-17 | R3 | CORE-1 | Verificación de seguridad OSPF: carga transitoria de clave MD5 errónea `CLAVE_ERRONEA_123` en interface-template y restauración (sección 5.2) | `0fd4c0a` | Cargar la clave MD5 legítima |
+| 2026-10-17 | R4 | DIST-2 | Verificación de seguridad VRRP: carga transitoria de password errónea `WRONGPASS` en grupo `vrrp-users` y restauración (sección 5.3) | `0fd4c0a` | Cargar la clave VRRP legítima |
+| 2026-10-17 | R4, R5 | DIST-1, DIST-2 | Drill 1: caída del master VRRP (`disable`/`enable` vrid 10 en DIST-1). Pérdida: 1% (~1 s). Detalle en runbook `drill_F4.1-CaidaMasterVRRP.md` | `0fd4c0a` | `/interface vrrp enable [find vrid=10]` |
+| 2026-10-17 | R3, R5 | CORE-1, CORE-2 | Drill 2: corte de enlace DIST-CORE (`disable`/`enable ether11` en CORE-1). Pérdida: 0% por ECMP OSPF. Detalle en runbook `drill_F4.2-CaidaEnlaceDIST-CORE.md` | `0fd4c0a` | `/interface enable ether11` |
+| 2026-10-17 | R3, R5 | CORE-1, CORE-2 | Drill 3: corte de enlace CORE-CORE (`disable`/`enable ether10` en CORE-1). Pérdida: 0%. Detalle en runbook `drill_F4.3-CaidaEnlaceCORE-CORE.md` | `0fd4c0a` | `/interface enable ether10` |
+| 2026-10-17 | R2, R5 | EDGE, ISP-1, ISP-2 | Drill 4: caída de sesión eBGP ISP-1 (`disable`/`enable bgp-isp1` en EDGE). Pérdida: 6% (~1 s). Detalle en runbook `drill_F4.4-CaidaDeISP-1.md` | `0fd4c0a` | `/routing bgp connection enable [find name=bgp-isp1]` |
+| 2026-10-17 | R1, R5 | EDGE, CORE-1, ISP-1 | Drill 5: falla combinada BGP ISP-1 + enlace EDGE-CORE-1 (`disable bgp-isp1` y `disable ether11`). Pérdida: 24% (~8 s). Detalle en runbook `drill_F4.5-FallaCombinada.md` | `0fd4c0a` | Reactivar conexión BGP y habilitar `ether11` |
+| 2026-10-17 | R5 | Los 7 routers | Backup post-F4: exports `.rsc` versionados en `backups/2026-10-17_F4_BASE/` y capturas completas de evidencias en `capturas/F4/` | `0fd4c0a` | No aplica (referencia de restauración de F4) |
