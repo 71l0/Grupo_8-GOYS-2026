@@ -154,14 +154,14 @@ Formato de tarea: `- [ ] descripción (Rol)`
 ### Feature: 5 drills de failover
 *Criterio: cada uno con runbook (detección→respuesta→recuperación) + post-mortem + tiempo medido.*
 > Confirmar con la guía `laboratorio-failover-routing.md` cuáles son los 5 drills. Propuesta de partida:
-- [ ] Drill 1 — Caída del master VRRP (R4 ejecuta, R5 mide)
-- [ ] Drill 2 — Caída de un enlace dist–core (R3 ejecuta, R5 mide)
-- [ ] Drill 3 — Caída de un nodo CORE / enlace core–core (R3 ejecuta, R5 mide)
-- [ ] Drill 4 — Caída de un ISP (R1 ejecuta, R5 mide)
-- [ ] Drill 5 — Falla combinada o del segundo ISP (R2 ejecuta, R5 mide)
-- [ ] Escribir un runbook por drill en `runbooks/` (R5)
-- [ ] Escribir post-mortem y tiempos medidos de cada drill en `docs/memoria.md` (R5)
-- [ ] Capturas organizadas por drill en `capturas/` (R5)
+- [ x ] Drill 1 — Caída del master VRRP (R4 ejecuta, R5 mide)
+- [ x ] Drill 2 — Caída de un enlace dist–core (R3 ejecuta, R5 mide)
+- [ x ] Drill 3 — Caída de un nodo CORE / enlace core–core (R3 ejecuta, R5 mide)
+- [ x ] Drill 4 — Caída de un ISP (R1 ejecuta, R5 mide)
+- [ x ] Drill 5 — Falla combinada o del segundo ISP (R2 ejecuta, R5 mide)
+- [ x ] Escribir un runbook en donde se desarrollen los drill en `runbooks/` (R5)
+- [ x ] Escribir post-mortem y tiempos medidos de cada drill (R5)
+- [ x ] Capturas organizadas por drill en `capturas/` (R5)
 
 ### Feature: Monitoreo
 *Criterio: SNMP/chequeos habilitados y documentados.*
