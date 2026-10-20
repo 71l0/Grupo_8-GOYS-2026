@@ -170,10 +170,10 @@ Formato de tarea: `- [ ] descripción (Rol)`
 
 ### Feature: Verificación de seguridad
 *Criterio: adyacencia/sesión con clave incorrecta FALLA (documentado).*
-- [ ] Probar OSPF con clave MD5 incorrecta y capturar evidencia (R3)
-- [ x ] Probar BGP con clave TCP-MD5 incorrecta y capturar evidencia (R1/R2) — hecho en F3; documentado en la sección 5.1 de la memoria
-- [ ] Probar VRRP con auth incorrecta y capturar evidencia (R4)
-- [ ] Documentar resultados en la memoria (R5) — BGP listo (sección 5.1); faltan OSPF y VRRP
+- [x] Probar OSPF con clave MD5 incorrecta y capturar evidencia (R3)
+- [x] Probar BGP con clave TCP-MD5 incorrecta y capturar evidencia (R1/R2) — hecho en F3; documentado en la sección 5.1 de la memoria
+- [x] Probar VRRP con auth incorrecta y capturar evidencia (R4)
+- [x] Documentar resultados en la memoria (R5) — BGP (sección 5.1), OSPF (sección 5.2) y VRRP (sección 5.3) documentados con capturas
 
 ---
 
