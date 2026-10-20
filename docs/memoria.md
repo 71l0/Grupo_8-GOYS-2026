@@ -1079,6 +1079,7 @@ Cada fila registra una intervención sobre los nodos con el formato definido en 
 | F1 | Proyecto GNS3 `topologia_failover_routing` recién importado (snapshot BASE de los nodos) | `backups/2026-10-08_F1_BASE/` |
 | F2 | `backups/2026-10-08_F1_BASE/` | `backups/2026-10-11_F2_BASE/` |
 | F3 | `backups/2026-10-11_F2_BASE/` | `backups/2026-10-11_F3_BASE/` |
+| F4 | `backups/2026-10-11_F3_BASE/` | `backups/2026-10-17_F4_BASE/` |
 
 #### 6.1.1 Fase 1: Topología + hardening + backup
 
