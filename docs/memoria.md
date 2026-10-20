@@ -1005,7 +1005,7 @@ La consigna exige comprobar que una adyacencia o sesión con clave incorrecta **
 |---|---|---|---|
 | BGP con clave TCP-MD5 incorrecta → la sesión **no** llega a `established` | R1/R2 | ✅ verificado en F3 | Sección 5.1 |
 | OSPF con clave MD5 incorrecta → la adyacencia **no** llega a FULL | R3 | ✅ verificado en F4 | Sección 5.2 |
-| VRRP con auth incorrecta → ambos routers pasan a master | R4 | ⏳ pendiente F4 | — |
+| VRRP con auth incorrecta → ambos routers pasan a master | R4 | ✅ verificado en F4 | Sección 5.3 |
 
 ### 5.1 BGP con clave TCP-MD5 incorrecta (F3)
 
@@ -1042,6 +1042,27 @@ Para verificar que OSPF v2 valida la firma criptográfica en cada paquete Hello 
    ![Restablecimiento de adyacencias OSPF a estado Full](../capturas/F4/OSPFconClaveMD5Incorrecta-3.png)
 
 **Resultado:** se comprueba que ante una discrepancia en la clave MD5, la adyacencia OSPF no se establece ni se mantiene, protegiendo al área 0 contra inyección o alteración de rutas por nodos no autorizados.
+
+### 5.3 VRRP con clave de autenticación incorrecta (F4)
+
+Para comprobar el mecanismo de autenticación en la redundancia de primer salto (RFC 5798 / RouterOS simple authentication), se manipuló la contraseña del grupo `vrrp-users` (VRID 10) en DIST-2:
+
+1. **Estado inicial y carga de password errónea en DIST-2:** inicialmente DIST-2 actúa como backup (`B`) del grupo `vrrp-users` (prioridad 100), mientras DIST-1 es el master (prioridad 150). En DIST-2 se alteró la clave de autenticación del grupo:
+   ```routeros
+   [admin@DIST-2] > /interface vrrp set [find vrid=10] password="WRONGPASS"
+   ```
+
+   ![Carga de clave VRRP errónea en DIST-2](../capturas/F4/VRRPconClaveIncorrecta.png)
+
+2. **Detección de falla de autenticación y doble master:** al recibir los anuncios VRRP de DIST-1 (`192.168.10.2`) con una clave distinta, DIST-2 descarta los paquetes e informa en consola `received packet from 192.168.10.2 simple authentication failed`. Como DIST-2 deja de computar los anuncios legítimos, asume que el master cayó tras expirar el temporizador y pasa también al estado `RM` (Running Master), originando un escenario de doble master (split-brain en el grupo).
+
+   ![Descarte por authentication failed y paso a doble master](../capturas/F4/VRRPconClaveIncorrecta-2.png)
+
+3. **Restauración de la clave legítima:** al restablecer la contraseña compartida en DIST-2, este vuelve a procesar los anuncios de DIST-1. Al detectar que DIST-1 anuncia prioridad 150 (superior a los 100 de DIST-2), este último cede inmediatamente el rol y regresa a estado `B` (backup).
+
+   ![Restablecimiento de DIST-2 a estado backup tras corregir la clave](../capturas/F4/VRRPconClaveIncorrecta-3.png)
+
+**Resultado:** se valida que ante una discrepancia de clave en VRRP, los anuncios son rechazados explícitamente (`simple authentication failed`). Esto previene que un equipo espía o mal configurado se incorpore al grupo VRRP o secuestre la VIP de la red.
 
 ---
 
