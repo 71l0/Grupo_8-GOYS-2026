@@ -11,7 +11,7 @@ Formato de tarea: `- [ ] descripción (Rol)`
 | F1 — Topología + hardening + backup | vie 9/10 | completada (restore probado y `dhcp-client` removido — memoria §2.5) |
 | F2 — VRRP + OSPF | vie 16/10 | completada |
 | F3 — BGP + firewall | vie 16/10 | completada |
-| F4 — Drills + monitoreo | mar 20/10 | pendiente |
+| F4 — Drills + monitoreo | mar 20/10 | completada |
 | F5 — Memoria + defensa | vie 23/10 | pendiente |
 
 ---
@@ -149,31 +149,28 @@ Formato de tarea: `- [ ] descripción (Rol)`
 
 ## Epic F4 — Drills + monitoreo · vence mar 20/10
 
-> **Rotación R1 ↔ R2 en esta fase.**
-
 ### Feature: 5 drills de failover
 *Criterio: cada uno con runbook (detección→respuesta→recuperación) + post-mortem + tiempo medido.*
-> Confirmar con la guía `laboratorio-failover-routing.md` cuáles son los 5 drills. Propuesta de partida:
-- [ x ] Drill 1 — Caída del master VRRP (R4 ejecuta, R5 mide)
-- [ x ] Drill 2 — Caída de un enlace dist–core (R3 ejecuta, R5 mide)
-- [ x ] Drill 3 — Caída de un nodo CORE / enlace core–core (R3 ejecuta, R5 mide)
-- [ x ] Drill 4 — Caída de un ISP (R1 ejecuta, R5 mide)
-- [ x ] Drill 5 — Falla combinada o del segundo ISP (R2 ejecuta, R5 mide)
-- [ x ] Escribir un runbook en donde se desarrollen los drill en `runbooks/` (R5)
-- [ x ] Escribir post-mortem y tiempos medidos de cada drill (R5)
-- [ x ] Capturas organizadas por drill en `capturas/` (R5)
+- [ x ] Drill 1 — Caída del master VRRP (R4 ejecuta, R5 mide) — 1 % de pérdida, failover ≈ 1 s
+- [ x ] Drill 2 — Caída de un enlace dist–core (R3 ejecuta, R5 mide) — 0 % de pérdida (ECMP)
+- [ x ] Drill 3 — Caída del enlace core–core (R3 ejecuta, R5 mide) — 0 % de pérdida
+- [ x ] Drill 4 — Caída de ISP-1 (R2 por rotación, R5 mide) — salida por ISP-2, 6 % de pérdida
+- [ x ] Drill 5 — Falla combinada ISP-1 + enlace EDGE–CORE-1 (R1 por rotación, R5 mide) — 24 % acotado
+- [ x ] Escribir un runbook por drill en `runbooks/` (R5) — `drill_F4-*.md`
+- [ x ] Escribir post-mortem y tiempos medidos de cada drill en `docs/memoria.md` (R5) — §7
+- [ x ] Capturas organizadas por drill en `capturas/F4/` (R5)
 
 ### Feature: Monitoreo
 *Criterio: SNMP/chequeos habilitados y documentados.*
-- [ ] Habilitar SNMP (v3 si es posible) con usuario de solo lectura en los 7 routers (R1–R4)
-- [ ] Definir y documentar chequeos (vecinos OSPF, sesiones BGP, estado VRRP) (R5)
+- [ x ] Habilitar SNMP con community de solo lectura `goys2026-mon` (acotada a 192.168.0.0/16; `public` deshabilitada) en los 7 routers (R1–R4)
+- [ x ] Definir y documentar chequeos (vecinos OSPF, sesiones BGP, estado VRRP, ruta de salida) (R5) — memoria §8
 
 ### Feature: Verificación de seguridad
 *Criterio: adyacencia/sesión con clave incorrecta FALLA (documentado).*
-- [x] Probar OSPF con clave MD5 incorrecta y capturar evidencia (R3)
-- [x] Probar BGP con clave TCP-MD5 incorrecta y capturar evidencia (R1/R2) — hecho en F3; documentado en la sección 5.1 de la memoria
-- [x] Probar VRRP con auth incorrecta y capturar evidencia (R4)
-- [x] Documentar resultados en la memoria (R5) — BGP (sección 5.1), OSPF (sección 5.2) y VRRP (sección 5.3) documentados con capturas
+- [ x ] Probar OSPF con clave MD5 incorrecta y capturar evidencia (R3) — memoria §5.2
+- [ x ] Probar BGP con clave TCP-MD5 incorrecta y capturar evidencia (R1/R2) — hecho en F3; documentado en la sección 5.1 de la memoria
+- [ x ] Probar VRRP con auth incorrecta y capturar evidencia (R4) — memoria §5.3
+- [ x ] Documentar resultados en la memoria (R5) — secciones 5.1, 5.2 y 5.3
 
 ---
 
