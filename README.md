@@ -48,7 +48,7 @@ Centralizar, documentar y versionar el diseño, la implementación, la **operaci
 
 | Actividad / Proyecto | Descripción | Estado |
 |---|---|---|
-| [Failover Routing (raíz)](.) | Failover Routing: la red que no se cae | En progreso (F0–F3 hechas) |
+| [Failover Routing (raíz)](.) | Failover Routing: la red que no se cae | En progreso (F0–F4 hechas) |
 | [`goys-vrrp-grupo08/`](goys-vrrp-grupo08) | Laboratorio VRRP — Redundancia de primer salto | Completado |
 | `goys-proyecto_integrador-grupo08` | Proyecto Integrador + Feria de Redes | Pendiente |
 
@@ -96,7 +96,7 @@ La red debe sobrevivir a fallas de enlace y de nodo. No alcanza con que ande: ti
 | F1 | Topología + hardening + backup | vie 9/10 | Completada |
 | F2 | VRRP + OSPF | vie 16/10 | Completada |
 | F3 | BGP + firewall | vie 16/10 | Completada |
-| F4 | Drills + monitoreo | mar 20/10 | Pendiente |
+| F4 | Drills + monitoreo | mar 20/10 | Completada |
 | F5 | Memoria + defensa | vie 23/10 | Pendiente |
 
 > **Regla de oro:** F0 antes que cualquier CLI. Sin aprobación del docente no se toca un nodo.

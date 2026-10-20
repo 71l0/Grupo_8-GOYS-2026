@@ -6,7 +6,7 @@ Esta carpeta almacena las configuraciones de los dispositivos que forman parte d
 
 ## Estado
 
-Se cargaron las configuraciones finales de F3 (los 7 routers), tomadas del respaldo `backups/2026-10-11_F3_BASE/`. `/export` no incluye claves: OSPF MD5, BGP TCP-MD5 y VRRP auth se cargan por separado (política en `docs/memoria.md`, sección 1.3.4).
+Se cargaron las configuraciones vigentes tras F4 (los 7 routers), tomadas del respaldo `backups/2026-10-17_F4_BASE/` (incluyen el monitoreo SNMP de F4 y la loopback `8.8.8.8/32` en los ISP). `/export` no incluye claves: OSPF MD5, BGP TCP-MD5 y VRRP auth se cargan por separado (política en `docs/memoria.md`, sección 1.3.4).
 
 | Router | Archivo |
 |--------|---------|

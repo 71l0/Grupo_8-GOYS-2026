@@ -1066,9 +1066,91 @@ Para comprobar el mecanismo de autenticación en la redundancia de primer salto 
 
 ---
 
-## 6. Registro de cambios
+## 6. Los 5 drills de failover (F4)
 
-### 6.1 Change log
+Metodología: cada drill siguió la secuencia **detección → respuesta → recuperación**, con un ping continuo corriendo desde PC-USER como medidor de impacto (pérdida y RTT). El detalle operativo (comandos exactos, verificaciones nodo por nodo) está en un runbook por drill en `runbooks/`; acá el consolidado, los tiempos medidos y los post-mortems.
+
+| # | Drill | Falla inyectada | Pérdida medida | Tiempo de failover | Runbook |
+|:-:|-------|-----------------|----------------|--------------------|---------|
+| 1 | Caída del master VRRP | `vrrp-users` (vrid 10) deshabilitado en DIST-1 | 1/60 paquetes (1 %) | ≈ 1 s | `runbooks/drill_F4-CaidaMasterVRRP.md` |
+| 2 | Caída enlace DIST–CORE | `ether11` (CORE-1 ↔ DIST-1) deshabilitada | 0/29 paquetes (0 %) | < 1 s | `runbooks/drill_F4-CaidaEnlaceDIST-CORE.md` |
+| 3 | Caída enlace core–core | `ether10` (CORE-1 ↔ CORE-2) deshabilitada | 0/29 paquetes (0 %); 0/65 tras recuperar | < 1 s | `runbooks/drill_F4-CaidaEnlaceCORE-CORE.md` |
+| 4 | Caída de ISP-1 | Conexión `bgp-isp1` deshabilitada en EDGE | 1/15 paquetes (6 %) | ≈ 1 s | `runbooks/drill_F4-CaidaDeISP-1.md` |
+| 5 | Falla combinada | `bgp-isp1` + `ether11` de EDGE (doble falla) | 8/33 paquetes (24 %, acotado a la convergencia doble) | ≈ 8 s de degradación, luego estable | `runbooks/drill_F4-FallaCombinada.md` |
+
+### 6.1 Drill 1 — Caída del master VRRP
+
+- **Detección:** estado baseline en `/interface vrrp print` (DIST-1 `M` en vrid 10; DIST-2 `B`); la caída se vería como migración del rol `B`→`M` en el backup.
+- **Respuesta:** `/interface vrrp disable [find vrid=10]` en DIST-1; DIST-2 asumió el gateway virtual y el ping a `1.1.1.1` siguió respondiendo.
+- **Recuperación:** `enable` del grupo en DIST-1; volvió el master por prioridad (150 > 100) y DIST-2 regresó a backup.
+- **Tiempo medido:** 59/60 paquetes recibidos (1 %) → failover ≈ 1 s (intervalo VRRP de 1 s).
+- **Post-mortem:** funcionó por prioridades bien diferenciadas y auth compartida; la load-sharing acotó el impacto al 50 % de las LANs (SERVERS no se vio afectada). Aprendizaje: monitorear el rol master/backup por SNMP, porque el usuario casi no percibe la caída.
+
+### 6.2 Drill 2 — Caída de un enlace DIST–CORE
+
+- **Detección:** adyacencias OSPF FULL por ambos enlaces (ECMP en las tablas).
+- **Respuesta:** `/interface disable ether11` en CORE-1 (enlace a DIST-1); OSPF retiró el vecino y el tráfico siguió por CORE-2 sin perder paquetes.
+- **Recuperación:** `enable ether11`; la adyacencia se reconstruyó y volvió el ECMP completo.
+- **Tiempo medido:** 29/29 paquetes (0 % de pérdida) → conmutación transparente (< 1 s).
+- **Post-mortem:** el doble enlace CORE↔DIST del diseño + ECMP ya instalado en las tablas hicieron el failover invisible. Aprendizaje: los picos de RTT vistos son artefacto de GNS3 al iniciar el ping, no del failover.
+
+### 6.3 Drill 3 — Caída del enlace core–core
+
+- **Detección:** vecino `5.5.5.5` (CORE-2) visible en `Full` por `ether10` en CORE-1.
+- **Respuesta:** `/interface disable ether10`; el vecino CORE-2 desapareció, las adyacencias restantes transitaron `ExStart`/`Init` y volvieron a `Full`; el tráfico siguió por los caminos alternativos (EDGE↔CORE y CORE↔DIST).
+- **Recuperación:** `enable ether10`; adyacencia CORE-1↔CORE-2 restaurada y ECMP interno restituido.
+- **Tiempo medido:** 29/29 paquetes (0 %) durante la caída; 65/65 (0 %) en la verificación tras la recuperación.
+- **Post-mortem:** se valida la corrección del defecto #3 del diagrama original: el core–core acorta caminos y da ECMP, pero la red **no depende** de él para funcionar. Aprendizaje: el reabrimiento de enlaces produce re-formaciones de adyacencias esperables (ExStart/Init), sin impacto en tráfico.
+
+### 6.4 Drill 4 — Caída de ISP-1
+
+- **Detección:** sesiones `bgp-isp1-1` y `bgp-isp2-1` `established` y ruta dual-homed a `8.8.8.8/32` (`DAb` vía ISP-1 + `Db` vía ISP-2).
+- **Respuesta:** `/routing bgp connection disable [find name=bgp-isp1]` en EDGE; la vía de ISP-1 se retiró al instante y la ruta vía ISP-2 (`10.255.0.6`) quedó activa; la sesión con ISP-2 siguió `established` absorbiendo el tráfico.
+- **Recuperación:** `enable` de la conexión; sesión re-establecida y rutas dual-homed reinstaladas.
+- **Tiempo medido:** 14/15 paquetes a `8.8.8.8` (6 %) → failover ≈ 1 s.
+- **Post-mortem:** el multi-homing con sesiones independientes y rutas de igual distancia funcionó como se diseñó. Aprendizaje importante: el `disable` administrativo simula la caída de forma limpia; en una caída real la sesión moriría por `hold-time` (1m30s) — en producción se acortaría con **BFD** o timers agresivos.
+
+### 6.5 Drill 5 — Falla combinada (ISP-1 + enlace EDGE–CORE-1)
+
+- **Detección:** estado baseline completo (BGP + OSPF + tablas) antes de inyectar.
+- **Respuesta:** doble inyección en EDGE (`disable bgp-isp1` + `disable ether11`); las rutas internas convergieron todas por CORE-2 (`10.255.0.14%ether12`), `8.8.8.8/32` siguió activa vía ISP-2 y el `traceroute` confirmó el camino: DIST-1 → CORE-2 → EDGE → ISP-2.
+- **Recuperación:** `enable` de ambos; sesiones y adyacencias restauradas.
+- **Tiempo medido:** 25/33 paquetes (24 % de pérdida acotada a ≈ 8 s de convergencia doble); luego tráfico estable.
+- **Post-mortem:** dos fallas de capas distintas, no correlacionadas, se absorben por mecanismos independientes (BGP multi-homing + malla OSPF). Aprendizaje: la pérdida es mayor que en drills individuales porque convergen dos protocolos a la vez; con BFD/timers agresivos y ECMP más ancho se reduciría. También se validó que un destino sin anunciante vivo (`1.1.1.1` de ISP-1) desaparezca limpiamente de la tabla.
+
+---
+
+## 7. Monitoreo (F4)
+
+**SNMP habilitado en los 7 routers** (commit `0fd4c0a`), en línea con la política de seguridad de la sección 1.3.2 (SNMP apagado hasta F4, con community propia — nunca `public`):
+
+```routeros
+/snmp community
+set [ find default=yes ] disabled=yes
+add addresses=192.168.0.0/16 name=goys2026-mon read-access=yes
+/snmp set enabled=yes contact=Grupo08-GOYS location=GNS3-Lab
+```
+
+- **Community `goys2026-mon`:** de solo lectura, acotada por ACL a las redes del lab (`192.168.0.0/16`); la community por defecto `public` queda deshabilitada.
+- **Contact/location** identifican al grupo en la recolección.
+
+![SNMP habilitado en ISP-1 con community goys2026-mon y public deshabilitada](../capturas/F4/monitoreoSNMP.png)
+
+**Chequeos definidos para el monitoreo operativo:**
+
+| Qué se monitorea | Cómo se verifica | Alerta / umbral propuesto |
+|---|---|---|
+| Adyacencias OSPF | `/routing ospf neighbor print` (flag `Full` en cada vecino esperado) | Vecino ausente o estado ≠ `Full` |
+| Sesiones BGP | `/routing bgp session print` (flag `E`, `prefix-count`, `uptime`) | Sesión sin `E` o `prefix-count` inesperado (0) |
+| Estado VRRP | `/interface vrrp print` (un `M` y un `B` por grupo) | Dos masters (split-brain) o master sin backup |
+| Ruta de salida | `/ip route print where dst-address=8.8.8.8/32` | Sin ruta activa = sin salida a Internet |
+| Dispositivos vía SNMP | Community `goys2026-mon` desde estación de monitoreo (solo lectura) | Host/SNMP sin responder |
+
+---
+
+## 8. Registro de cambios
+
+### 8.1 Change log
 
 Cada fila registra una intervención sobre los nodos con el formato definido en la sección 1.4: **fecha, rol, nodo, cambio, commit y rollback**. La columna *Commit* indica el commit del repositorio que versiona la configuración resultante (los `.rsc` de `backups/`). Los cambios se aplicaron en GNS3 y su estado queda respaldado en el commit citado.
 
@@ -1081,7 +1163,7 @@ Cada fila registra una intervención sobre los nodos con el formato definido en 
 | F3 | `backups/2026-10-11_F2_BASE/` | `backups/2026-10-11_F3_BASE/` |
 | F4 | `backups/2026-10-11_F3_BASE/` | `backups/2026-10-17_F4_BASE/` |
 
-#### 6.1.1 Fase 1: Topología + hardening + backup
+#### 8.1.1 Fase 1: Topología + hardening + backup
 
 Los `.rsc` de F1_BASE registran el estado de los 7 routers después del despliegue, el direccionamiento y el hardening, y previo a VRRP/OSPF/BGP. Las verificaciones de conectividad (PING-01 a PING-09) y el snapshot BASE quedan en `capturas/F1/`.
 
@@ -1095,7 +1177,7 @@ Los `.rsc` de F1_BASE registran el estado de los 7 routers después del desplieg
 | 2026-10-10 | R5 | Todos | Verificación de conectividad entre vecinos directos (PING-01 a PING-09) con capturas en `capturas/F1/` | `7a17126` | No aplica (verificación) |
 | 2026-10-08 | R5 | Los 7 routers | Backup inicial: `/export` de cada router versionado en `backups/2026-10-08_F1_BASE/`, con evidencia de export por router | `6b200fb` | No aplica (el backup es la referencia de restauración) |
 
-#### 6.1.2 Fase 2: VRRP + OSPF
+#### 8.1.2 Fase 2: VRRP + OSPF
 
 Los `.rsc` de F2 difieren de los de F1 solo en los routers que participan de VRRP y OSPF (EDGE, CORE-1, CORE-2, DIST-1 y DIST-2). ISP-1 e ISP-2 no cambiaron.
 
@@ -1125,7 +1207,7 @@ Los `.rsc` de F2 difieren de los de F1 solo en los routers que participan de VRR
 
 ![Snapshot BASE de F2 (SNAPSHOT_BASE_F2) en GNS3](../capturas/F2/snapshot_base_f2.png)
 
-#### 6.1.3 Fase 3: BGP + firewall
+#### 8.1.3 Fase 3: BGP + firewall
 
 Entre F2 y F3 cambiaron EDGE, ISP-1 e ISP-2. CORE-1, CORE-2, DIST-1 y DIST-2 no tuvieron cambios de configuración (sus `.rsc` son iguales a los de F2).
 
@@ -1154,14 +1236,14 @@ Entre F2 y F3 cambiaron EDGE, ISP-1 e ISP-2. CORE-1, CORE-2, DIST-1 y DIST-2 no 
 
 ![Snapshot BASE de F3 (SNAPSHOT_BASE_F3) en GNS3](../capturas/F3/snapshot_base_f3.png)
 
-#### 6.1.4 Correcciones post-F3 (16/10)
+#### 8.1.4 Correcciones post-F3 (16/10)
 
 | Fecha | Rol | Nodo | Cambio | Commit | Rollback |
 |---|---|---|---|---|---|
 | 2026-10-16 | R1–R4 | Los 7 routers | Remoción del `dhcp-client` de fábrica (`/ip dhcp-client remove [find]`) y saneado de los exports versionados en `backups/` (sección 2.5.2) | `ed21f61` | No aplica (el cliente estaba inactivo; reagregarlo es `/ip dhcp-client add interface=<iface>`) |
 | 2026-10-16 | R5 | ISP-1 | Prueba de restore: `/system reset-configuration no-defaults=yes` + `/system backup load name=F3_BASE.backup`, con verificación de la configuración restaurada (sección 2.5.1) | `ed21f61` | No aplica (es la prueba del procedimiento de recuperación) |
 
-#### 6.1.5 Fase 4: Drills + monitoreo
+#### 8.1.5 Fase 4: Drills + monitoreo
 
 Para la ejecución de los drills y las pruebas de monitoreo se aplicaron ajustes de servicio y laboratorio en los routers (versionados en `backups/2026-10-17_F4_BASE/` y en `configs/` bajo el commit `0fd4c0a`):
 
@@ -1182,3 +1264,17 @@ Para la ejecución de los drills y las pruebas de monitoreo se aplicaron ajustes
 | 2026-10-17 | R2, R5 | EDGE, ISP-1, ISP-2 | Drill 4: caída de sesión eBGP ISP-1 (`disable`/`enable bgp-isp1` en EDGE). Pérdida: 6% (~1 s). Detalle en runbook `drill_F4.4-CaidaDeISP-1.md` | `0fd4c0a` | `/routing bgp connection enable [find name=bgp-isp1]` |
 | 2026-10-17 | R1, R5 | EDGE, CORE-1, ISP-1 | Drill 5: falla combinada BGP ISP-1 + enlace EDGE-CORE-1 (`disable bgp-isp1` y `disable ether11`). Pérdida: 24% (~8 s). Detalle en runbook `drill_F4.5-FallaCombinada.md` | `0fd4c0a` | Reactivar conexión BGP y habilitar `ether11` |
 | 2026-10-17 | R5 | Los 7 routers | Backup post-F4: exports `.rsc` versionados en `backups/2026-10-17_F4_BASE/` y capturas completas de evidencias en `capturas/F4/` | `0fd4c0a` | No aplica (referencia de restauración de F4) |
+
+**Evidencia del backup post-F4:** `/file print` en cada router muestra el export `<router>-config.rsc` y los respaldos binarios de las cuatro generaciones (`F1_BASE.backup`, `F2_BASE.backup`, `F3_BASE.backup` y `F4_BASE.backup`). Los 7 `.backup` de F4 están generados en los routers.
+
+| Router | Export y backups (`/file print`) |
+|---|---|
+| ISP-1 | ![Export y backups en ISP-1 (F3)](../capturas/F4/exportYBackupPorRouter.png) |
+| ISP-2 | ![Export y backups en ISP-2 (F3)](../capturas/F4/exportYBackupPorRouter2.png) |
+| EDGE | ![Export y backups en EDGE (F3)](../capturas/F4/exportYBackupPorRouter3.png) |
+| CORE-1 | ![Export y backups en CORE-1 (F3)](../capturas/F4/exportYBackupPorRouter4.png) |
+| CORE-2 | ![Export y backups en CORE-2 (F3)](../capturas/F4/exportYBackupPorRouter5.png) |
+| DIST-1 | ![Export y backups en DIST-1 (F3)](../capturas/F4/exportYBackupPorRouter6.png) |
+| DIST-2 | ![Export y backups en DIST-2 (F3)](../capturas/F4/exportYBackupPorRouter7.png) |
+
+![Snapshot BASE de F3 (SNAPSHOT_BASE_F3) en GNS3](../capturas/F4/snapshot_base_f4.png)
