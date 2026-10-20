@@ -1158,5 +1158,27 @@ Entre F2 y F3 cambiaron EDGE, ISP-1 e ISP-2. CORE-1, CORE-2, DIST-1 y DIST-2 no 
 
 | Fecha | Rol | Nodo | Cambio | Commit | Rollback |
 |---|---|---|---|---|---|
-| 2026-10-16 | R1–R4 | Los 7 routers | Remoción del `dhcp-client` de fábrica (`/ip dhcp-client remove [find]`) y saneado de los exports versionados en `backups/` (sección 2.5.2) | `docs(memoria): documenta correcciones 16/10` (asignar hash al commitear) | No aplica (el cliente estaba inactivo; reagregarlo es `/ip dhcp-client add interface=<iface>`) |
-| 2026-10-16 | R5 | ISP-1 | Prueba de restore: `/system reset-configuration no-defaults=yes` + `/system backup load name=F3_BASE.backup`, con verificación de la configuración restaurada (sección 2.5.1) | `docs(memoria): documenta correcciones 16/10` (asignar hash al commitear) | No aplica (es la prueba del procedimiento de recuperación) |
+| 2026-10-16 | R1–R4 | Los 7 routers | Remoción del `dhcp-client` de fábrica (`/ip dhcp-client remove [find]`) y saneado de los exports versionados en `backups/` (sección 2.5.2) | `ed21f61` | No aplica (el cliente estaba inactivo; reagregarlo es `/ip dhcp-client add interface=<iface>`) |
+| 2026-10-16 | R5 | ISP-1 | Prueba de restore: `/system reset-configuration no-defaults=yes` + `/system backup load name=F3_BASE.backup`, con verificación de la configuración restaurada (sección 2.5.1) | `ed21f61` | No aplica (es la prueba del procedimiento de recuperación) |
+
+#### 6.1.5 Fase 4: Drills + monitoreo
+
+Para la ejecución de los drills y las pruebas de monitoreo se aplicaron ajustes de servicio y laboratorio en los routers (versionados en `backups/2026-10-17_F4_BASE/` y en `configs/` bajo el commit `0fd4c0a`):
+
+1. **Habilitación de SNMP en los 7 routers:** comunidad `goys2026-mon` restringida a la red de gestión `192.168.0.0/16`, contacto `Grupo08-GOYS` y ubicación `GNS3-Lab` (`capturas/F4/monitoreoSNMP.png`).
+2. **Loopback 8.8.8.8/32 en ISP-1 e ISP-2:** IP de destino público agregada a la interfaz `lo` de ambos proveedores para validar salida dual-homed multi-proveedor eBGP.
+3. **Pruebas de seguridad de protocolo:** pruebas transitorias de claves erróneas en OSPF (CORE-1) y VRRP (DIST-2), documentadas en las secciones 5.2 y 5.3 con reversión inmediata.
+4. **Ejecución de los 5 drills de failover:** desconexiones programadas (VRRP en DIST-1, enlace DIST-CORE en CORE-1, enlace CORE-CORE en CORE-1, sesión eBGP con ISP-1 en EDGE, y falla combinada eBGP ISP-1 + enlace CORE-1 en EDGE), todas revertidas operativamente en el acto.
+
+| Fecha | Rol | Nodo | Cambio | Commit | Rollback |
+|---|---|---|---|---|---|
+| 2026-10-17 | R1–R4 | Los 7 routers | Habilitación de SNMP v2c: comunidad `goys2026-mon` (red `192.168.0.0/16`), comunidad `public` por defecto deshabilitada, `contact=Grupo08-GOYS`, `location=GNS3-Lab` | `0fd4c0a` | `/snmp set enabled=no` o restaurar `2026-10-11_F3_BASE/<router>.rsc` |
+| 2026-10-17 | R2 | ISP-1, ISP-2 | Agregado de loopback de servicio público `8.8.8.8/32` en interfaz `lo` para simulación de destino externo alcanzable por ambos ISP | `0fd4c0a` | `/ip address remove [find address="8.8.8.8/32"]` |
+| 2026-10-17 | R3 | CORE-1 | Verificación de seguridad OSPF: carga transitoria de clave MD5 errónea `CLAVE_ERRONEA_123` en interface-template y restauración (sección 5.2) | `0fd4c0a` | Cargar la clave MD5 legítima |
+| 2026-10-17 | R4 | DIST-2 | Verificación de seguridad VRRP: carga transitoria de password errónea `WRONGPASS` en grupo `vrrp-users` y restauración (sección 5.3) | `0fd4c0a` | Cargar la clave VRRP legítima |
+| 2026-10-17 | R4, R5 | DIST-1, DIST-2 | Drill 1: caída del master VRRP (`disable`/`enable` vrid 10 en DIST-1). Pérdida: 1% (~1 s). Detalle en runbook `drill_F4.1-CaidaMasterVRRP.md` | `0fd4c0a` | `/interface vrrp enable [find vrid=10]` |
+| 2026-10-17 | R3, R5 | CORE-1, CORE-2 | Drill 2: corte de enlace DIST-CORE (`disable`/`enable ether11` en CORE-1). Pérdida: 0% por ECMP OSPF. Detalle en runbook `drill_F4.2-CaidaEnlaceDIST-CORE.md` | `0fd4c0a` | `/interface enable ether11` |
+| 2026-10-17 | R3, R5 | CORE-1, CORE-2 | Drill 3: corte de enlace CORE-CORE (`disable`/`enable ether10` en CORE-1). Pérdida: 0%. Detalle en runbook `drill_F4.3-CaidaEnlaceCORE-CORE.md` | `0fd4c0a` | `/interface enable ether10` |
+| 2026-10-17 | R2, R5 | EDGE, ISP-1, ISP-2 | Drill 4: caída de sesión eBGP ISP-1 (`disable`/`enable bgp-isp1` en EDGE). Pérdida: 6% (~1 s). Detalle en runbook `drill_F4.4-CaidaDeISP-1.md` | `0fd4c0a` | `/routing bgp connection enable [find name=bgp-isp1]` |
+| 2026-10-17 | R1, R5 | EDGE, CORE-1, ISP-1 | Drill 5: falla combinada BGP ISP-1 + enlace EDGE-CORE-1 (`disable bgp-isp1` y `disable ether11`). Pérdida: 24% (~8 s). Detalle en runbook `drill_F4.5-FallaCombinada.md` | `0fd4c0a` | Reactivar conexión BGP y habilitar `ether11` |
+| 2026-10-17 | R5 | Los 7 routers | Backup post-F4: exports `.rsc` versionados en `backups/2026-10-17_F4_BASE/` y capturas completas de evidencias en `capturas/F4/` | `0fd4c0a` | No aplica (referencia de restauración de F4) |
