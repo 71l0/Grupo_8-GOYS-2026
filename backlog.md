@@ -12,7 +12,7 @@ Formato de tarea: `- [ ] descripción (Rol)`
 | F2 — VRRP + OSPF | vie 16/10 | completada |
 | F3 — BGP + firewall | vie 16/10 | completada |
 | F4 — Drills + monitoreo | mar 20/10 | completada |
-| F5 — Memoria + defensa | vie 23/10 | pendiente |
+| F5 — Memoria + defensa | vie 23/10 | completada |
 
 ---
 
@@ -178,18 +178,18 @@ Formato de tarea: `- [ ] descripción (Rol)`
 
 ### Feature: Memoria
 *Criterio: plantilla de documentación completa (todas las secciones).*
-- [ ] Completar secciones de diseño, IPAM y políticas (R1)
-- [ ] Completar sección de proveedores / BGP (R2)
-- [ ] Completar sección de core / OSPF (R3)
-- [ ] Completar sección de distribución / VRRP (R4)
-- [ ] Consolidar change log (coincidente con commits), drills y revisión final (R5)
+- [ x ] Completar secciones de diseño, IPAM y políticas (R1)
+- [ x ] Completar sección de proveedores / BGP (R2)
+- [ x ] Completar sección de core / OSPF (R3)
+- [ x ] Completar sección de distribución / VRRP (R4)
+- [ x ] Consolidar change log (coincidente con commits), drills y revisión final (R5)
 
 ### Feature: Backlog cerrado
 *Criterio: todas las tareas en "done".*
-- [ ] Revisar todo el backlog contra criterios de aceptación (R5)
-- [ ] Backup final en `backups/` y configs finales `.rsc` en `configs/` (R1–R5)
+- [ x ] Revisar todo el backlog contra criterios de aceptación (R5)
+- [ x ] Backup final en `backups/` y configs finales `.rsc` en `configs/` (R1–R5)
 
 ### Feature: Defensa oral
 *Criterio: cada integrante explica su parte y una parte ajena.*
-- [ ] Armar guía de defensa por rol (R1–R5)
-- [ ] Ensayo cruzado: cada uno explica la parte de otro rol (R1–R5)
+- [ x ] Armar guía de defensa por rol (R1–R5)
+- [ x ] Ensayo cruzado: cada uno explica la parte de otro rol (R1–R5)
