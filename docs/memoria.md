@@ -1326,10 +1326,10 @@ El laboratorio nos permitió evaluar la resiliencia de una topología redundante
 
 ### Diseño (F0)
 
-- [ ] IPAM completo y sin solapamiento  
-- [ ] Corrección del diagrama justificada (≥ 3 defectos)  
-- [ ] Política de seguridad definida (usuarios, servicios, claves)  
-- [ ] Política de operación definida (change log \+ backup)
+- [ x ] IPAM completo y sin solapamiento  
+- [ x ] Corrección del diagrama justificada (≥ 3 defectos)  
+- [ x ] Política de seguridad definida (usuarios, servicios, claves)  
+- [ x ] Política de operación definida (change log \+ backup)
 
 ### Redes
 
