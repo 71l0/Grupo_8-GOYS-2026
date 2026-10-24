@@ -1278,3 +1278,87 @@ Para la ejecución de los drills y las pruebas de monitoreo se aplicaron ajustes
 | DIST-2 | ![Export y backups en DIST-2 (F3)](../capturas/F4/exportYBackupPorRouter7.png) |
 
 ![Snapshot BASE de F3 (SNAPSHOT_BASE_F3) en GNS3](../capturas/F4/snapshot_base_f4.png)
+
+## 9. Capturas
+
+Las evidencias del laboratorio se organizan en el repositorio del proyecto con el objetivo de documentar la configuración inicial, la validación de conectividad, el funcionamiento de los protocolos de redundancia y el comportamiento de la topología ante fallas controladas.
+
+En donde la estructura de las carpetas nos permite relacionar las capturas con cada fase de implementación y facilita la revisión de los resultados obtenidos respectivamente.
+
+[Ubicacion de las capturas](../capturas/)
+
+## 10. Conclusiones y lecciones aprendidas
+
+El laboratorio GOYS-2026 se nos permitió implementar y validar una topología de red a partir del uso de MikroTik CHR y GNS3, integrando en este caso VRRP para la redundancia de gateway, OSPF para el enrutamiento interno y eBGP para la conectividad externa mediante dos proveedores.
+
+En las fases F2 y F3 se establecieron la base de redundancia y enrutamiento, mientras que en la parte F4, se nos permitió evaluar el comportamiento de la red ante cinco escenarios de falla controlada, los cuales fueron: caída del master VRRP, pérdida de enlaces DIST–CORE y CORE–CORE, caída de la sesión BGP con ISP-1 y una falla combinada.
+
+### 10.1 Resultados principales
+
+- VRRP: se verificó la transferencia del rol master. En la prueba documentada se registraron 60 paquetes transmitidos y 59 recibidos.
+- OSPF: las pruebas de pérdida de enlaces DIST–CORE y CORE–CORE registraron 29 paquetes transmitidos y recibidos en cada caso, sin pérdida observada durante las pruebas.
+- eBGP: se evaluó la continuidad de la conectividad mediante ISP-2 tras deshabilitar la sesión con ISP-1. La prueba registrada presentó 15 paquetes transmitidos y 14 recibidos.
+- Falla combinada: se analizó el comportamiento conjunto de OSPF y BGP, documentando las rutas alternativas y la conectividad resultante.
+- Monitoreo y seguridad: se incorporó SNMP y se documentaron pruebas de autenticación de VRRP y OSPF MD5.
+
+### 10.2 Dificultades y lecciones aprendidas
+Uno de los principales desafíos que nos encontramos fue el analizar la interacción entre los protocolos, ya que con una leve falla se puede modificar las adyacencias, las rutas disponibles y los caminos utilizados por el tráfico.
+
+Pero con las pruebas, se nos permitio comprender que disponer de redundancia configurada no garantiza por sí solo la continuidad del servicio, por esta razon, es necesario verificar los cambios de estado, las rutas activas y la conectividad de extremo a extremo.
+
+También se identificó la importancia de diferenciar la pérdida de paquetes del tiempo de convergencia. Las estadísticas de ping permiten cuantificar pérdidas y RTT, pero los tiempos exactos de detección y recuperación requieren registros temporales específicos.
+
+Por último, los backups, las capturas y los runbooks nos resultaron fundamentales para documentar los estados de configuración que fuimos aplicando, para asi tambien respaldar los resultados y facilitar la reproducción de las pruebas.
+
+### 10.3 Mejoras propuestas
+Como posibles mejoras futuras, proponemos en automatizar las pruebas de conectividad, registrar timestamps para medir con mayor precisión los tiempos de detección y recuperación, ampliar los escenarios de falla y establecer umbrales cuantitativos de aceptación.
+
+### 10.4 Conclusión final
+El laboratorio nos permitió evaluar la resiliencia de una topología redundante mediante pruebas controladas y evidencias de su comportamiento operativo. En el trabajo, tambien queremos destacar la importancia de combinar una configuración adecuada con mecanismos de monitoreo, procedimientos reproducibles y mediciones verificables para analizar la disponibilidad y la recuperación de una red.
+
+## 11. Referencias
+
+- **Guía de referencia:** `laboratorio-failover-routing.md`, documento disponible en el propio laboratorio, con configuraciones, consideraciones prácticas (*gotchas*) y recursos de consulta.
+- **Lecturas y videos:** Halabi, Doyle y Carroll, Stallings, *Google SRE Book*; RFC 5798, 2328, 4271, 2385, 5925 y 5709; videos sobre VRRP/HSRP de NetWorks y Arawi.
+
+## 12. Checklist de entrega
+> Marcar **todo** antes de entregar. Si algo no está, el lab no está completo.
+
+### Diseño (F0)
+
+- [ x ] IPAM completo y sin solapamiento  
+- [ x ] Corrección del diagrama justificada (≥ 3 defectos)  
+- [ x ] Política de seguridad definida (usuarios, servicios, claves)  
+- [ x ] Política de operación definida (change log \+ backup)
+
+### Redes
+
+- [ x ] 7 CHR \+ 2 switches \+ 2 hosts levantados y cableados  
+- [ x ] VRRP operativo (2 grupos, load-sharing)  
+- [ x ] OSPF área 0 con adyacencias (incluido core–core)  
+- [ x ] BGP eBGP ×2 establecido (multi-homing)  
+- [ x ] Los 5 drills ejecutados y documentados (runbook \+ post-mortem \+ tiempo)
+
+### Seguridad
+
+- [ x ] Hardening aplicado (password, usuario mínimo, servicios apagados)  
+- [ x ] OSPF MD5 funcionando  
+- [ x ] BGP TCP-MD5 funcionando  
+- [ x ] VRRP auth funcionando  
+- [ x ] Firewall edge aplicado  
+- [ x ] Prueba con clave incorrecta → debe **fallar** (documentado)
+
+### Operación
+
+- [ x ] Change log completo (refleja los commits del repo)  
+- [ x ] Backups con restore probado  
+- [ x ] Monitoreo habilitado y documentado  
+- [ x ] Runbook por drill \+ post-mortem global
+
+### Entrega
+
+- [ x ] Memoria completa (todas las secciones de esta plantilla)  
+- [ x ] Repo git con la estructura correcta y commits por rol  
+- [ x ] `backlog.md` con todas las tareas en "done"  
+- [ x ] Capturas en la carpeta `capturas/`  
+- [ x ] Cada integrante puede defender su parte **y** una parte ajena
