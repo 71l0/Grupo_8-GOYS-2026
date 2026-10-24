@@ -97,7 +97,7 @@ La red debe sobrevivir a fallas de enlace y de nodo. No alcanza con que ande: ti
 | F2 | VRRP + OSPF | vie 16/10 | Completada |
 | F3 | BGP + firewall | vie 16/10 | Completada |
 | F4 | Drills + monitoreo | mar 20/10 | Completada |
-| F5 | Memoria + defensa | vie 23/10 | Pendiente |
+| F5 | Memoria + defensa | vie 23/10 | Completada |
 
 > **Regla de oro:** F0 antes que cualquier CLI. Sin aprobación del docente no se toca un nodo.
 
